@@ -1,0 +1,67 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`prompt.ts - line numbering and prompt building > matches snapshot for login challenge prompt 1`] = `
+"You are a technical code evaluator for RepoGym.
+Create an interactive comprehension challenge for the request flow "POST /login".
+The goal is to test whether a developer genuinely understands what happens in this code when the request is processed.
+
+Requirements:
+1. Ask one clear, conceptual or technical question about the execution flow, business logic, authentication, or data flow in this request.
+2. Formulate 2 to 4 "expectedFacts" that a complete, correct answer should mention.
+3. For each fact:
+   - "id": A unique string ID, e.g. "fact_1", "fact_2", etc.
+   - "fact": A concise summary of the key fact or code behavior.
+   - "file": The exact file path from the provided code where this happens.
+   - "startLine": The starting line number (1-based integer).
+   - "endLine": The ending line number (1-based integer).
+4. CRITICAL: Every cited file MUST be one of the files provided below.
+5. CRITICAL: Every startLine and endLine must accurately match the lines in the numbered code blocks below.
+
+Respond with valid JSON only in this format:
+{
+  "question": "What happens when ...?",
+  "expectedFacts": [
+    {
+      "id": "fact_1",
+      "fact": "...",
+      "file": "routes/login.js",
+      "startLine": 8,
+      "endLine": 8
+    }
+  ]
+}
+
+Code files for this flow:
+
+<file path="routes/login.js">
+1: const express = require('express');
+2: const bcrypt = require('bcrypt');
+3: const { findUserByEmail } = require('../models/user');
+4: 
+5: const router = express.Router();
+6: 
+7: router.post('/login', async (req, res) => {
+8:   const user = await findUserByEmail(req.body.email);
+9:   if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+10: 
+11:   const ok = await bcrypt.compare(req.body.password, user.passwordHash);
+12:   if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
+13: 
+14:   res.json({ message: 'Logged in' });
+15: });
+16: 
+17: module.exports = router;
+</file>
+
+<file path="models/user.js">
+1: const users = [
+2:   { email: 'a@test.com', passwordHash: '$2b$10$...' }
+3: ];
+4: 
+5: async function findUserByEmail(email) {
+6:   return users.find(u => u.email === email);
+7: }
+8: 
+9: module.exports = { findUserByEmail };
+</file>"
+`;

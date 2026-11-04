@@ -4,3 +4,4 @@
   "app.js": "const express = require('express');\nconst loginRoute = require('./routes/login');\n\nconst app = express();\napp.use(express.json());\napp.use('/api', loginRoute);\n\napp.listen(3000);",
   "utils/logger.js": "module.exports = { log: console.log };"
 }
+
