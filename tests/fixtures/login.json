@@ -1,0 +1,6 @@
+{
+  "routes/login.js": "const express = require('express');\nconst bcrypt = require('bcrypt');\nconst { findUserByEmail } = require('../models/user');\n\nconst router = express.Router();\n\nrouter.post('/login', async (req, res) => {\n  const user = await findUserByEmail(req.body.email);\n  if (!user) return res.status(401).json({ error: 'Invalid credentials' });\n\n  const ok = await bcrypt.compare(req.body.password, user.passwordHash);\n  if (!ok) return res.status(401).json({ error: 'Invalid credentials' });\n\n  res.json({ message: 'Logged in' });\n});\n\nmodule.exports = router;",
+  "models/user.js": "const users = [\n  { email: 'a@test.com', passwordHash: '$2b$10$...' }\n];\n\nasync function findUserByEmail(email) {\n  return users.find(u => u.email === email);\n}\n\nmodule.exports = { findUserByEmail };",
+  "app.js": "const express = require('express');\nconst loginRoute = require('./routes/login');\n\nconst app = express();\napp.use(express.json());\napp.use('/api', loginRoute);\n\napp.listen(3000);",
+  "utils/logger.js": "module.exports = { log: console.log };"
+}
