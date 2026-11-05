@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
+import { NavbarAuth } from '@/components/NavbarAuth';
 
 interface DashboardData {
   sessionsCount: number;
@@ -61,12 +62,12 @@ function DashboardContent() {
     fetchDashboard();
   }, []);
 
-  const handleStartSession = async (analysisId = 'demo', flowTag?: string) => {
+  const handleStartSession = async (analysisId = 'demo', flowTag?: string, totalQuestions = 5) => {
     try {
       const res = await fetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ analysisId, flowTag }),
+        body: JSON.stringify({ analysisId, flowTag, totalQuestions }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -112,6 +113,7 @@ function DashboardContent() {
           >
             + Analyze New Repo
           </a>
+          <NavbarAuth />
         </div>
       </header>
 

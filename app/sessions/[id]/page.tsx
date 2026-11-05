@@ -8,6 +8,7 @@ import { QuestionPanel } from '@/components/QuestionPanel';
 import { GradeCard } from '@/components/GradeCard';
 import { Session, Question, Attempt, Analysis } from '@/lib/store';
 import { Citation, Grade } from '@/lib/schemas';
+import { NavbarAuth } from '@/components/NavbarAuth';
 
 function SessionPageContent() {
   const params = useParams();
@@ -218,10 +219,11 @@ function SessionPageContent() {
         <div className="flex items-center gap-3 text-xs">
           <a
             href="/dashboard"
-            className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition"
+            className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition hidden sm:inline-block"
           >
             Dashboard
           </a>
+          <NavbarAuth />
         </div>
       </header>
 
@@ -271,8 +273,10 @@ function SessionPageContent() {
               {/* Score calculation */}
               {(() => {
                 const totalScore = attempts.reduce((acc, a) => acc + a.score, 0);
-                const maxPossible = attempts.reduce((acc, a) => acc + a.max_score, 0) || 30;
-                const pct = Math.round((totalScore / maxPossible) * 100);
+                const maxPossible =
+                  attempts.reduce((acc, a) => acc + a.max_score, 0) ||
+                  (session.total_questions ? session.total_questions * 10 : 50);
+                const pct = maxPossible > 0 ? Math.round((totalScore / maxPossible) * 100) : 0;
 
                 return (
                   <div className="p-4 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between">

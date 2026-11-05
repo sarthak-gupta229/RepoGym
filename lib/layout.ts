@@ -7,6 +7,10 @@ export function layout(
   nodeWidth = 240,
   nodeHeight = 80
 ): GraphNode[] {
+  if (!nodes || nodes.length === 0) {
+    return [];
+  }
+
   const g = new dagre.graphlib.Graph();
   g.setGraph({ rankdir: 'LR', nodesep: 50, ranksep: 80 });
   g.setDefaultEdgeLabel(() => ({}));

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { NavbarAuth } from '@/components/NavbarAuth';
 
 export default function HomePage() {
   const router = useRouter();
@@ -60,16 +61,17 @@ export default function HomePage() {
         <nav className="flex items-center gap-4 text-xs font-medium text-zinc-600 dark:text-zinc-300">
           <a
             href="/dashboard"
-            className="hover:text-zinc-900 dark:hover:text-zinc-100 transition"
+            className="hover:text-zinc-900 dark:hover:text-zinc-100 transition hidden sm:inline-block"
           >
             Dashboard
           </a>
           <a
             href="/repos/demo"
-            className="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition text-zinc-800 dark:text-zinc-200"
+            className="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition text-zinc-800 dark:text-zinc-200 hidden sm:inline-block"
           >
             Explore Demo Graph
           </a>
+          <NavbarAuth />
         </nav>
       </header>
 

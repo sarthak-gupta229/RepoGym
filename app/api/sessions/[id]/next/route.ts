@@ -51,9 +51,12 @@ export async function POST(
     };
   });
 
-  // Pick next flow that hasn't been used yet in this session
+  // Pick next flow that hasn't been used yet in this session, or cycle through flows
   const availableFlows = analysis.flows.filter((f) => !usedFlowTags.has(f.tag));
-  const nextFlow = availableFlows.length > 0 ? availableFlows[0] : analysis.flows[0];
+  const nextFlow =
+    availableFlows.length > 0
+      ? availableFlows[0]
+      : analysis.flows[(nextPosition - 1) % analysis.flows.length];
 
   try {
     const challenge = await generateChallenge(analysis.file_map, nextFlow, pastResults);

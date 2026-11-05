@@ -214,18 +214,31 @@ export function extractImports(content: string, filePath: string): ImportStateme
 }
 
 function findTargetFile(resolvedBase: string, fileSet: Set<string>): string | null {
+  const base = normalizePath(resolvedBase).replace(/\/+$/, '');
+  const baseWithoutExt = base.replace(/\.(js|jsx|ts|tsx|mjs|cjs|py)$/i, '');
+
   const candidates = [
-    resolvedBase,
-    `${resolvedBase}.js`,
-    `${resolvedBase}.ts`,
-    `${resolvedBase}.jsx`,
-    `${resolvedBase}.tsx`,
-    `${resolvedBase}/index.js`,
-    `${resolvedBase}/index.ts`,
-    `${resolvedBase}/index.jsx`,
-    `${resolvedBase}/index.tsx`,
-    `${resolvedBase}.py`,
-    `${resolvedBase}/__init__.py`,
+    base,
+    baseWithoutExt,
+    `${baseWithoutExt}.ts`,
+    `${baseWithoutExt}.tsx`,
+    `${baseWithoutExt}.js`,
+    `${baseWithoutExt}.jsx`,
+    `${baseWithoutExt}.mjs`,
+    `${baseWithoutExt}.cjs`,
+    `${baseWithoutExt}/index.ts`,
+    `${baseWithoutExt}/index.tsx`,
+    `${baseWithoutExt}/index.js`,
+    `${baseWithoutExt}/index.jsx`,
+    `${baseWithoutExt}.py`,
+    `${baseWithoutExt}/__init__.py`,
+    // If files are under src/
+    `src/${baseWithoutExt}.ts`,
+    `src/${baseWithoutExt}.tsx`,
+    `src/${baseWithoutExt}.js`,
+    `src/${baseWithoutExt}.jsx`,
+    `src/${baseWithoutExt}/index.ts`,
+    `src/${baseWithoutExt}/index.js`,
   ];
 
   for (const cand of candidates) {
@@ -254,32 +267,42 @@ export function buildGraph(files: Record<string, string>): DependencyGraph {
     let resolvedCount = 0;
 
     for (const imp of imports) {
-      const spec = imp.specifier;
-      // Only relative imports (starting with .) are considered for edges
+      const spec = imp.specifier.trim();
+      let target: string | null = null;
+
+      // 1. Relative import starting with .
       if (spec.startsWith('.')) {
         let resolved = resolveImportPath(filePath, spec);
         if (filePath.endsWith('.py') && spec.startsWith('.')) {
           // Python relative import handling
           resolved = resolveImportPath(filePath, spec.replace(/^\./, ''));
         }
-        const target = findTargetFile(resolved, fileSet);
-        if (target) {
-          const edgeId = `${filePath}->${target}`;
-          if (!edgeKeySet.has(edgeId)) {
-            edgeKeySet.add(edgeId);
-            edges.push({
-              id: edgeId,
-              source: filePath,
-              target,
-              statement: imp.raw,
-            });
-          }
-          resolvedCount++;
-        } else {
-          unresolvedImports.push(spec);
+        target = findTargetFile(resolved, fileSet);
+      }
+      // 2. Path aliases starting with @/ or ~/
+      else if (spec.startsWith('@/') || spec.startsWith('~/')) {
+        const clean = spec.replace(/^[@~]\//, '');
+        target = findTargetFile(clean, fileSet);
+      }
+      // 3. Root-relative or Python module internal import
+      else {
+        const dotAsSlash = spec.replace(/\./g, '/');
+        target = findTargetFile(spec, fileSet) || findTargetFile(dotAsSlash, fileSet);
+      }
+
+      if (target && target !== filePath) {
+        const edgeId = `${filePath}->${target}`;
+        if (!edgeKeySet.has(edgeId)) {
+          edgeKeySet.add(edgeId);
+          edges.push({
+            id: edgeId,
+            source: filePath,
+            target,
+            statement: imp.raw,
+          });
         }
+        resolvedCount++;
       } else {
-        // External package or non-relative import
         unresolvedImports.push(spec);
       }
     }

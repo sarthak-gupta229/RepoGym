@@ -33,10 +33,11 @@ export async function generateChallenge(
   files: Record<string, string>,
   flow: Flow,
   pastResults?: PastResult[],
-  options?: { openaiClient?: OpenAI }
+  options?: { openaiClient?: OpenAI; difficulty?: 'easy' | 'medium' | 'hard' }
 ): Promise<Challenge> {
+  const difficulty = options?.difficulty || 'easy';
   const flowFiles = selectFlowFiles(files, flow);
-  let prompt = buildChallengePrompt(flowFiles, flow.label, flow.routeFile, pastResults);
+  let prompt = buildChallengePrompt(flowFiles, flow.label, flow.routeFile, pastResults, { difficulty });
 
   let lastProblems: string[] = [];
 

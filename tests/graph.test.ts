@@ -59,5 +59,56 @@ describe('buildGraph on login fixture', () => {
     expect(appNode.position!.x).toBeLessThan(loginNode.position!.x);
     expect(loginNode.position!.x).toBeLessThan(userNode.position!.x);
   });
+
+  it('resolves alias @/ and root-relative imports into connected edges', () => {
+    const customFiles: Record<string, string> = {
+      'app/page.tsx': "import { Button } from '@/components/button'; import { db } from 'lib/db';",
+      'components/button.tsx': "export function Button() { return null; }",
+      'lib/db.ts': "export const db = {};",
+    };
+
+    const graph = buildGraph(customFiles);
+    expect(graph.nodes).toHaveLength(3);
+    expect(graph.edges).toHaveLength(2);
+
+    const edgePairs = graph.edges.map((e) => ({ source: e.source, target: e.target }));
+    expect(edgePairs).toContainEqual({
+      source: 'app/page.tsx',
+      target: 'components/button.tsx',
+    });
+    expect(edgePairs).toContainEqual({
+      source: 'app/page.tsx',
+      target: 'lib/db.ts',
+    });
+  });
+
+  it('builds complete connected graph for multi-tier repository with all files', () => {
+    const multiTierFiles: Record<string, string> = {
+      'server.js': 'const api = require("./routes/api"); const auth = require("./routes/auth");',
+      'routes/api.js': 'const data = require("../controllers/data"); const log = require("../utils/logger");',
+      'routes/auth.js': 'const authCtrl = require("../controllers/auth");',
+      'controllers/data.js': 'const db = require("../database/db");',
+      'controllers/auth.js': 'const db = require("../database/db");',
+      'database/db.js': 'module.exports = { connect: () => {} };',
+      'utils/logger.js': 'module.exports = { log: () => {} };',
+    };
+
+    const graph = buildGraph(multiTierFiles);
+    // All 7 files must come as nodes
+    expect(graph.nodes).toHaveLength(7);
+    const nodeFiles = graph.nodes.map((n) => n.file);
+    expect(nodeFiles).toEqual(expect.arrayContaining(Object.keys(multiTierFiles)));
+
+    // All 7 connections must be resolved
+    expect(graph.edges).toHaveLength(7);
+    const edges = graph.edges.map((e) => `${e.source}->${e.target}`);
+    expect(edges).toContain('server.js->routes/api.js');
+    expect(edges).toContain('server.js->routes/auth.js');
+    expect(edges).toContain('routes/api.js->controllers/data.js');
+    expect(edges).toContain('routes/api.js->utils/logger.js');
+    expect(edges).toContain('routes/auth.js->controllers/auth.js');
+    expect(edges).toContain('controllers/data.js->database/db.js');
+    expect(edges).toContain('controllers/auth.js->database/db.js');
+  });
 });
 

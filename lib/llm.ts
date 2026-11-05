@@ -30,15 +30,21 @@ export async function askLLM<T = unknown>(
     openaiClient?: OpenAI;
   }
 ): Promise<LLMCallResult<T>> {
-  const model = options?.model || PRIMARY_MODEL;
+  const envModel = process.env.OPENROUTER_MODEL?.trim();
+  const defaultModel = envModel
+    ? (envModel.includes('/') ? envModel : `nvidia/${envModel}`)
+    : PRIMARY_MODEL;
+  const model = options?.model || defaultModel;
   const systemMessage = options?.systemMessage || 'Respond with valid JSON only.';
   const maxRetries = options?.retries !== undefined ? options.retries : 1;
+
+  const apiKey = (process.env.OPENROUTER_API_KEY || '').trim().replace(/^key-/, '');
 
   const client =
     options?.openaiClient ||
     new OpenAI({
       baseURL: 'https://openrouter.ai/api/v1',
-      apiKey: process.env.OPENROUTER_API_KEY || '',
+      apiKey,
     });
 
   let lastError: unknown;

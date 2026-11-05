@@ -6,6 +6,7 @@ import loginFixture from '@/tests/fixtures/login.json';
 export interface User {
   id: string;
   email: string;
+  name?: string;
   github_username?: string;
   created_at: string;
 }
@@ -79,6 +80,7 @@ export interface FeedbackFlag {
 
 class InMemoryStore {
   users = new Map<string, User>();
+  userCredentials = new Map<string, { passwordHash: string; salt: string }>();
   repos = new Map<string, Repo>();
   analyses = new Map<string, Analysis>();
   sessions = new Map<string, Session>();
@@ -118,9 +120,66 @@ class InMemoryStore {
     const defaultUser: User = {
       id: 'demo-user-1',
       email: 'demo@repogym.dev',
+      name: 'Demo Student',
       created_at: new Date().toISOString(),
     };
     this.users.set(defaultUser.id, defaultUser);
+    this.userCredentials.set(defaultUser.id, {
+      salt: 'repogym_demo_salt_2026',
+      passwordHash: '49b3239f5a9b859351e867098074f0028b2f563a7f6e6e1b5f3b3bdd951e4dfb',
+    });
+  }
+
+  // Users
+  async getUser(id: string): Promise<User | null> {
+    return this.users.get(id) || null;
+  }
+
+  async getUserByEmail(email: string): Promise<User | null> {
+    const normalized = email.toLowerCase().trim();
+    for (const u of this.users.values()) {
+      if (u.email.toLowerCase().trim() === normalized) {
+        return u;
+      }
+    }
+    return null;
+  }
+
+  async createUser(data: {
+    email: string;
+    name?: string;
+    passwordHash?: string;
+    salt?: string;
+  }): Promise<User> {
+    const id = `user-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const user: User = {
+      id,
+      email: data.email.toLowerCase().trim(),
+      name: data.name,
+      created_at: new Date().toISOString(),
+    };
+    this.users.set(id, user);
+    if (data.passwordHash && data.salt) {
+      this.userCredentials.set(id, {
+        passwordHash: data.passwordHash,
+        salt: data.salt,
+      });
+    }
+    return user;
+  }
+
+  async getUserCredentials(
+    userId: string
+  ): Promise<{ passwordHash: string; salt: string } | null> {
+    return this.userCredentials.get(userId) || null;
+  }
+
+  async updateUserPassword(
+    userId: string,
+    passwordHash: string,
+    salt: string
+  ): Promise<void> {
+    this.userCredentials.set(userId, { passwordHash, salt });
   }
 
   // Repos

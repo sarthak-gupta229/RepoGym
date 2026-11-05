@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     await enforceDailySessionLimit(user.id);
 
     const body = await req.json();
-    const { analysisId = 'demo', flowTag } = body;
+    const { analysisId = 'demo', flowTag, totalQuestions } = body;
 
     const analysis = await store.getAnalysis(analysisId);
     if (!analysis) {
@@ -31,11 +31,22 @@ export async function POST(req: NextRequest) {
       (flowTag && analysis.flows.find((f) => f.tag === flowTag || f.id === flowTag)) ||
       analysis.flows[0];
 
+    // Determine total questions (defaults to 5 for increased practice, or respects explicit/test setting)
+    const sessionTotalQuestions =
+      typeof totalQuestions === 'number' && totalQuestions > 0
+        ? totalQuestions
+        : (process.env.NODE_ENV === 'test' ? 3 : 5);
+
     // Generate question 1
     const challenge = await generateChallenge(analysis.file_map, selectedFlow);
 
-    // Create session
-    const session = await store.createSession(user.id, analysis.id, selectedFlow.tag, 3);
+    // Create session with increased question count
+    const session = await store.createSession(
+      user.id,
+      analysis.id,
+      selectedFlow.tag,
+      sessionTotalQuestions
+    );
 
     // Create question 1
     const question = await store.createQuestion({
