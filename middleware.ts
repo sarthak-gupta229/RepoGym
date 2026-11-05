@@ -1,5 +1,5 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { NextResponse, type NextRequest } from 'next/server';
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -30,13 +30,13 @@ export async function middleware(request: NextRequest) {
         response.cookies.set({ name, value, ...options });
       },
       remove(name: string, options: CookieOptions) {
-        request.cookies.set({ name, value: '', ...options });
+        request.cookies.set({ name, value: "", ...options });
         response = NextResponse.next({
           request: {
             headers: request.headers,
           },
         });
-        response.cookies.set({ name, value: '', ...options });
+        response.cookies.set({ name, value: "", ...options });
       },
     },
   });
@@ -55,7 +55,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public files
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
-

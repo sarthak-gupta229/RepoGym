@@ -59,62 +59,62 @@ function FileNodeComponent({ data }: NodeProps<Node<FileNodeData>>) {
 
   return (
     <div
-      className={`px-3.5 py-2.5 rounded-xl border text-left shadow-sm transition-all duration-150 min-w-[210px] max-w-[280px] bg-white dark:bg-zinc-900 ${
+      className={`px-3 py-2 text-left transition-all duration-140 min-w-[210px] max-w-[280px] bg-[#171717] ${
         isSelected
-          ? 'border-blue-500 ring-2 ring-blue-500/40 shadow-blue-500/20 shadow-md dark:border-blue-400'
+          ? 'border border-[#EDEDED] ring-1 ring-[#EDEDED] bg-[#222222]'
           : isSelectedSource
-          ? 'border-blue-400 ring-1 ring-blue-400/30 bg-blue-50/40 dark:bg-blue-950/20'
+          ? 'border border-[#E6A360] bg-[#1a1712]'
           : isSelectedTarget
-          ? 'border-purple-400 ring-1 ring-purple-400/30 bg-purple-50/40 dark:bg-purple-950/20'
+          ? 'border border-[#CE7762] bg-[#1a1412]'
           : isHighlighted
-          ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/40 ring-2 ring-yellow-400 shadow-yellow-200'
-          : 'border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500'
+          ? 'border border-[#E6A360] ring-1 ring-[#E6A360] bg-[#1a1610]'
+          : 'border border-[#333333] hover:border-[#555555]'
       }`}
     >
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-2.5 !h-2.5 !bg-zinc-400 hover:!bg-blue-500 transition"
+        className="!w-2 !h-2 !rounded-none !bg-[#555555] hover:!bg-[#EDEDED] !border-0 transition"
       />
 
-      <div className="flex items-center justify-between gap-1 mb-0.5">
-        <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
+      <div className="flex items-center justify-between gap-1 mb-1">
+        <span className="text-[9px] font-mono font-medium uppercase px-1 py-0.2 bg-[#262626] border border-[#333333] text-[#EDEDED]">
           {langBadge}
         </span>
         {dirPath && (
-          <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-mono truncate max-w-[150px]">
+          <span className="text-[9px] text-[#A1A1A1] font-mono truncate max-w-[150px]">
             {dirPath}/
           </span>
         )}
       </div>
 
-      <div className="font-semibold text-xs font-mono text-zinc-900 dark:text-zinc-100 truncate">
+      <div className="font-mono text-xs font-semibold text-[#EDEDED] truncate">
         {fileName}
       </div>
 
       {/* Connection counts */}
-      <div className="mt-1.5 flex items-center gap-2.5 text-[10px] text-zinc-500 dark:text-zinc-400 font-mono">
-        <span className="flex items-center gap-1" title="Files imported by this file">
-          <span className="text-blue-500 font-bold">↗</span> {outgoingCount} imports
+      <div className="mt-1.5 flex items-center gap-3 text-[9px] text-[#A1A1A1] font-mono">
+        <span className="flex items-center gap-1" title="Outgoing imports">
+          <span className="text-[#E6A360]">&nearr;</span> {outgoingCount} IMP
         </span>
-        <span className="flex items-center gap-1" title="Files that import this file">
-          <span className="text-purple-500 font-bold">↙</span> {incomingCount} callers
+        <span className="flex items-center gap-1" title="Incoming callers">
+          <span className="text-[#CE7762]">&swarr;</span> {incomingCount} CAL
         </span>
       </div>
 
-      {/* Exports */}
+      {/* Export symbols */}
       {exports && exports.length > 0 && (
         <div className="mt-1.5 flex flex-wrap gap-1">
           {exports.slice(0, 3).map((exp) => (
             <span
               key={exp}
-              className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono truncate max-w-[120px]"
+              className="text-[9px] px-1 py-0.2 bg-[#000000] border border-[#262626] text-[#A1A1A1] font-mono truncate max-w-[120px]"
             >
               {exp}
             </span>
           ))}
           {exports.length > 3 && (
-            <span className="text-[9px] text-zinc-500 font-mono">
+            <span className="text-[9px] text-[#555555] font-mono">
               +{exports.length - 3}
             </span>
           )}
@@ -122,16 +122,16 @@ function FileNodeComponent({ data }: NodeProps<Node<FileNodeData>>) {
       )}
 
       {isHighlighted && (
-        <div className="mt-1 text-[10px] font-medium text-yellow-700 dark:text-yellow-400 flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse" />
-          Active Flow / Citation
+        <div className="mt-1.5 text-[9px] font-mono uppercase tracking-wider text-[#E6A360] flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#E6A360] animate-pulse" />
+          <span>Active Flow Citation</span>
         </div>
       )}
 
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-2.5 !h-2.5 !bg-zinc-400 hover:!bg-blue-500 transition"
+        className="!w-2 !h-2 !rounded-none !bg-[#555555] hover:!bg-[#EDEDED] !border-0 transition"
       />
     </div>
   );
@@ -160,7 +160,6 @@ export function DependencyGraph({
   showFlowOnly = false,
   flowFiles = [],
 }: DependencyGraphProps) {
-  // Stable primitive string keys to prevent unnecessary re-computations
   const highlightKey = (highlight || []).join(';');
   const flowFilesKey = (flowFiles || []).join(';');
   const nodesCount = graph?.nodes?.length || 0;
@@ -190,7 +189,7 @@ export function DependencyGraph({
     return { incomingMap: inc, outgoingMap: out, directTargets: targets, directSources: sources };
   }, [graph?.edges, selectedFile, edgesCount]);
 
-  // Compute nodes and edges directly with useMemo
+  // Compute nodes and edges
   const { computedNodes, computedEdges } = useMemo(() => {
     let filteredNodes = graph?.nodes || [];
     let filteredEdges = graph?.edges || [];
@@ -231,11 +230,11 @@ export function DependencyGraph({
 
       const strokeColor = isConnectedToSelected
         ? isSelectedSource
-          ? '#3b82f6' // Blue for outgoing imports
-          : '#a855f7' // Purple for incoming callers
+          ? '#E6A360' // Amber for outgoing imports
+          : '#CE7762' // Coral for incoming callers
         : isConnectedToHighlight
-        ? '#eab308' // Yellow for flow citations
-        : '#94a3b8'; // Default slate
+        ? '#E6A360' // Amber for flow citations
+        : '#333333'; // Minimal dark border
 
       const isDimmed = Boolean(
         selectedFile && !isConnectedToSelected && !isConnectedToHighlight
@@ -253,24 +252,25 @@ export function DependencyGraph({
         },
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          width: 14,
-          height: 14,
+          width: 12,
+          height: 12,
           color: strokeColor,
         },
         style: {
           stroke: strokeColor,
-          strokeWidth: isConnectedToSelected ? 2.5 : isConnectedToHighlight ? 2 : 1.5,
-          opacity: isDimmed ? 0.25 : 1,
+          strokeWidth: isConnectedToSelected ? 2 : isConnectedToHighlight ? 1.75 : 1,
+          opacity: isDimmed ? 0.2 : 1,
         },
         label: isConnectedToSelected
           ? isSelectedSource
-            ? 'imports'
-            : 'imported by'
+            ? 'IMPORTS'
+            : 'CALLER'
           : undefined,
         labelStyle: {
           fill: strokeColor,
           fontWeight: 600,
-          fontSize: 10,
+          fontSize: 9,
+          fontFamily: 'var(--font-mono)',
         },
       };
     });
@@ -311,7 +311,7 @@ export function DependencyGraph({
   );
 
   return (
-    <div className="w-full h-full min-h-[400px] border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden bg-zinc-50 dark:bg-zinc-950 relative">
+    <div className="w-full h-full min-h-[400px] border border-[#262626] bg-[#000000] relative overflow-hidden">
       <ReactFlow
         nodes={computedNodes}
         edges={computedEdges}
@@ -323,17 +323,17 @@ export function DependencyGraph({
         minZoom={0.15}
         maxZoom={2}
       >
-        <Controls className="!bg-white dark:!bg-zinc-800 !border-zinc-200 dark:!border-zinc-700 !shadow-sm" />
+        <Controls className="!bg-[#171717] !border-[#262626]" />
         <MiniMap
           nodeColor={(n) => {
             const data = n.data as FileNodeData;
-            if (data.isSelected) return '#3b82f6';
-            if (data.isHighlighted) return '#eab308';
-            return '#cbd5e1';
+            if (data.isSelected) return '#EDEDED';
+            if (data.isHighlighted) return '#E6A360';
+            return '#262626';
           }}
-          className="!bg-white/80 dark:!bg-zinc-900/80 !border-zinc-200 dark:!border-zinc-800 !rounded-lg"
+          className="!bg-[#000000] !border-[#262626]"
         />
-        <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="#94a3b8" />
+        <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="#262626" />
       </ReactFlow>
     </div>
   );

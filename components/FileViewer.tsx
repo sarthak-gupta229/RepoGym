@@ -18,46 +18,32 @@ export function FileViewer({
   const lines = React.useMemo(() => content.split('\n'), [content]);
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-zinc-100 dark:bg-zinc-800/80 border-b border-zinc-200 dark:border-zinc-800">
+    <div className="flex flex-col h-full bg-[#171717] border border-[#262626] overflow-hidden">
+      {/* Editorial Header */}
+      <div className="flex items-center justify-between px-4 py-2 bg-[#171717] border-b border-[#262626] font-mono text-[10px] text-[#A1A1A1] uppercase tracking-wider">
         <div className="flex items-center gap-2 overflow-hidden">
-          <svg
-            className="w-4 h-4 text-zinc-500 shrink-0"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-          <span className="font-mono text-xs font-medium text-zinc-800 dark:text-zinc-200 truncate">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#EDEDED]" />
+          <span className="font-semibold text-[#EDEDED] truncate">
             {filePath}
           </span>
-          <span className="text-[11px] text-zinc-600 dark:text-zinc-300">
-            ({lines.length} lines)
+          <span className="text-[#555555]">
+            [{lines.length} lines]
           </span>
         </div>
 
         {onClose && (
           <button
             onClick={onClose}
-            className="text-zinc-600 hover:text-zinc-700 dark:text-zinc-300 dark:hover:text-zinc-100 p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition"
+            className="text-[#A1A1A1] hover:text-[#EDEDED] px-1.5 py-0.5 border border-[#333333] hover:border-[#EDEDED] transition-colors"
             aria-label="Close viewer"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            &times;
           </button>
         )}
       </div>
 
-      {/* Code Area */}
-      <div className="flex-1 overflow-auto font-mono text-xs py-2 bg-zinc-50 dark:bg-zinc-950">
+      {/* Code Table Area */}
+      <div className="flex-1 overflow-auto font-mono text-xs py-2 bg-[#000000]">
         <table className="w-full border-collapse">
           <tbody>
             {lines.map((line, idx) => {
@@ -70,16 +56,26 @@ export function FileViewer({
               return (
                 <tr
                   key={lineNum}
-                  className={`leading-5 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 ${
+                  className={`leading-5 transition-colors ${
                     isHighlighted
-                      ? 'bg-yellow-100/70 dark:bg-yellow-950/40 text-yellow-950 dark:text-yellow-100 font-medium'
-                      : 'text-zinc-800 dark:text-zinc-200'
+                      ? 'bg-[#241c10] text-[#FFF0D1] font-medium'
+                      : 'hover:bg-[#111111] text-[#EDEDED]'
                   }`}
                 >
-                  <td className="w-12 select-none text-right pr-4 text-zinc-600 dark:text-zinc-300 text-[11px] border-r border-zinc-200 dark:border-zinc-800/60 align-top">
+                  <td
+                    className={`w-12 select-none text-right pr-4 text-[10px] border-r font-mono align-top ${
+                      isHighlighted
+                        ? 'text-[#E6A360] border-[#E6A360] font-bold'
+                        : 'text-[#555555] border-[#262626]'
+                    }`}
+                  >
                     {lineNum}
                   </td>
-                  <td className="pl-4 pr-4 whitespace-pre font-mono">
+                  <td
+                    className={`pl-4 pr-4 whitespace-pre font-mono text-xs ${
+                      isHighlighted ? 'border-l-2 border-[#E6A360] pl-3.5' : ''
+                    }`}
+                  >
                     {line || ' '}
                   </td>
                 </tr>
@@ -91,4 +87,3 @@ export function FileViewer({
     </div>
   );
 }
-

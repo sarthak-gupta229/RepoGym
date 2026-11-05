@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { DependencyGraph } from '@/components/DependencyGraph';
 import { FileViewer } from '@/components/FileViewer';
 import { NavbarAuth } from '@/components/NavbarAuth';
@@ -61,7 +62,6 @@ function RepoPageContent() {
   const [activeTab, setActiveTab] = useState<'graph' | 'connections'>('graph');
   const [questionCount, setQuestionCount] = useState<number>(5);
 
-  // Load real repository data from /api/repos/[id]
   useEffect(() => {
     async function loadRepoData() {
       try {
@@ -103,7 +103,6 @@ function RepoPageContent() {
         }
       } catch (err) {
         console.error('Failed to load repo files:', err);
-        // Fall back gracefully to demo fixture
         setFiles(loginFixture);
       } finally {
         setLoading(false);
@@ -113,27 +112,22 @@ function RepoPageContent() {
     loadRepoData();
   }, [repoId]);
 
-  // Compute dependency graph for ALL files
   const graph: GraphData = useMemo(() => {
     return buildGraph(files);
   }, [files]);
 
-  // All files list sorted alphabetically
   const allFilePaths = useMemo(() => Object.keys(files).sort(), [files]);
 
-  // Filtered files for search
   const filteredFiles = useMemo(() => {
     if (!searchQuery.trim()) return allFilePaths;
     const q = searchQuery.toLowerCase();
     return allFilePaths.filter((f) => f.toLowerCase().includes(q));
   }, [allFilePaths, searchQuery]);
 
-  // Current selected file node in graph
   const selectedNode = useMemo(() => {
     return graph.nodes.find((n) => n.file === selectedFile) || null;
   }, [graph.nodes, selectedFile]);
 
-  // Connections for selected file
   const fileConnections = useMemo(() => {
     if (!selectedFile) return { imports: [], callers: [] };
     const imports = graph.edges
@@ -147,7 +141,6 @@ function RepoPageContent() {
     return { imports, callers };
   }, [graph.edges, selectedFile]);
 
-  // Active flow files
   const activeFlowFiles = useMemo(() => {
     const activeFlow = flows[0];
     if (!activeFlow) return highlightFiles;
@@ -157,7 +150,6 @@ function RepoPageContent() {
     return Array.from(new Set([activeFlow.routeFile, ...connectedToFlow]));
   }, [flows, graph.edges, highlightFiles]);
 
-  // Connection counts per file for tree badges
   const fileConnectionCounts = useMemo(() => {
     const counts: Record<string, { imports: number; callers: number }> = {};
     for (const f of allFilePaths) {
@@ -199,12 +191,8 @@ function RepoPageContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 text-xs text-zinc-500">
-        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-        </svg>
-        Mapping repository architecture and connections...
+      <div className="min-h-screen flex items-center justify-center bg-[#000000] text-[10px] font-mono uppercase tracking-wider text-[#A1A1A1]">
+        Mapping repository architecture and local import graph...
       </div>
     );
   }
@@ -212,57 +200,59 @@ function RepoPageContent() {
   const repoTitle = repoInfo ? `${repoInfo.owner}/${repoInfo.name}` : repoId;
 
   return (
-    <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    <div className="min-h-screen flex flex-col bg-[#000000] text-[#EDEDED]">
       {/* Top Navbar */}
-      <header className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-3 flex items-center justify-between">
+      <header className="border-b border-[#262626] bg-[#000000] px-6 py-3 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-3">
-          <a href="/" className="font-bold text-lg tracking-tight flex items-center gap-2">
-            <span className="w-6 h-6 rounded bg-blue-600 text-white flex items-center justify-center text-xs font-mono">
+          <Link href="/" className="flex items-center gap-2 group">
+            <span className="px-1.5 py-0.5 bg-[#EDEDED] text-[#000000] font-mono font-bold text-xs">
               RG
             </span>
-            RepoGym
-          </a>
-          <span className="text-zinc-400">/</span>
-          <span className="font-mono text-xs px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-semibold">
+            <span className="font-bold text-sm tracking-tight uppercase">
+              RepoGym
+            </span>
+          </Link>
+          <span className="text-[#333333]">/</span>
+          <span className="font-mono text-xs px-2 py-0.5 bg-[#171717] border border-[#262626] text-[#EDEDED] font-semibold">
             {repoTitle}
           </span>
-          <span className="text-xs text-zinc-500 font-mono hidden md:inline">
-            {graph.nodes.length} files · {graph.edges.length} connections
+          <span className="text-[10px] text-[#A1A1A1] font-mono uppercase tracking-wider hidden md:inline">
+            {graph.nodes.length} files &bull; {graph.edges.length} edges
           </span>
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-2.5 text-xs">
+        <div className="flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-wider">
           <button
             onClick={toggleHighlight}
-            className={`px-3 py-1.5 rounded-lg font-medium border transition cursor-pointer ${
+            className={`px-3 py-1.5 border transition-colors cursor-pointer ${
               highlightFiles.length > 0
-                ? 'bg-yellow-50 dark:bg-yellow-950/50 border-yellow-400 text-yellow-800 dark:text-yellow-200'
-                : 'bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300'
+                ? 'bg-[#1a1610] border-[#E6A360] text-[#FFF0D1]'
+                : 'bg-transparent border-[#333333] hover:border-[#EDEDED] text-[#A1A1A1] hover:text-[#EDEDED]'
             }`}
           >
-            {highlightFiles.length > 0 ? 'Clear Flow Highlight' : 'Highlight Flow'}
+            {highlightFiles.length > 0 ? '[ Clear Flow Highlight ]' : '[ Highlight Flow ]'}
           </button>
 
           <button
             onClick={() => setShowFlowOnly(!showFlowOnly)}
-            className={`px-3 py-1.5 rounded-lg font-medium border transition cursor-pointer ${
+            className={`px-3 py-1.5 border transition-colors cursor-pointer ${
               showFlowOnly
-                ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-400 text-blue-800 dark:text-blue-200'
-                : 'bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300'
+                ? 'bg-[#1a1610] border-[#E6A360] text-[#FFF0D1]'
+                : 'bg-transparent border-[#333333] hover:border-[#EDEDED] text-[#A1A1A1] hover:text-[#EDEDED]'
             }`}
           >
-            {showFlowOnly ? 'Showing Flow Only' : `All Files (${allFilePaths.length})`}
+            {showFlowOnly ? 'FLOW ONLY' : `ALL FILES (${allFilePaths.length})`}
           </button>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <select
               value={questionCount}
               onChange={(e) => setQuestionCount(Number(e.target.value))}
-              className="px-2.5 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-medium focus:outline-none cursor-pointer"
+              className="px-2.5 py-1.5 bg-[#000000] border border-[#333333] text-[#EDEDED] font-mono text-[10px] uppercase focus:outline-none focus:border-[#EDEDED] cursor-pointer"
               title="Number of questions in session"
             >
-              <option value={5}>5 Questions (Default)</option>
+              <option value={5}>5 Questions (Standard)</option>
               <option value={7}>7 Questions</option>
               <option value={10}>10 Questions</option>
               <option value={3}>3 Questions</option>
@@ -270,12 +260,13 @@ function RepoPageContent() {
 
             <button
               onClick={handleStartSession}
-              className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition cursor-pointer shadow-sm shadow-blue-500/20 whitespace-nowrap"
+              className="px-4 py-1.5 bg-[#EDEDED] text-[#000000] border border-[#EDEDED] hover:bg-white font-semibold transition-all duration-140 cursor-pointer whitespace-nowrap"
             >
               Start Quiz Session &rarr;
             </button>
           </div>
 
+          <div className="h-4 w-px bg-[#262626] mx-1" />
           <NavbarAuth />
         </div>
       </header>
@@ -283,33 +274,33 @@ function RepoPageContent() {
       {/* Main Workspace Layout */}
       <main className="flex-1 p-4 grid grid-cols-1 lg:grid-cols-12 gap-4 h-[calc(100vh-65px)]">
         {/* Left Column: File Explorer & Connection Inspector (4 cols) */}
-        <div className="lg:col-span-4 flex flex-col h-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 shadow-sm overflow-hidden">
-          {/* Subheader & Search */}
-          <div className="flex items-center justify-between pb-2 mb-2 border-b border-zinc-100 dark:border-zinc-800">
-            <div className="flex items-center gap-2">
+        <div className="lg:col-span-4 flex flex-col h-full bg-[#171717] border border-[#262626] p-3 overflow-hidden">
+          {/* Tabs */}
+          <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#262626]">
+            <div className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider">
               <button
                 onClick={() => setActiveTab('graph')}
-                className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition cursor-pointer ${
+                className={`px-2.5 py-1 transition-colors cursor-pointer border ${
                   activeTab === 'graph'
-                    ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400'
-                    : 'text-zinc-500 hover:text-zinc-800'
+                    ? 'bg-[#EDEDED] text-[#000000] border-[#EDEDED] font-semibold'
+                    : 'bg-transparent text-[#A1A1A1] border-[#333333] hover:text-[#EDEDED]'
                 }`}
               >
                 Files ({allFilePaths.length})
               </button>
               <button
                 onClick={() => setActiveTab('connections')}
-                className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition cursor-pointer ${
+                className={`px-2.5 py-1 transition-colors cursor-pointer border ${
                   activeTab === 'connections'
-                    ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400'
-                    : 'text-zinc-500 hover:text-zinc-800'
+                    ? 'bg-[#EDEDED] text-[#000000] border-[#EDEDED] font-semibold'
+                    : 'bg-transparent text-[#A1A1A1] border-[#333333] hover:text-[#EDEDED]'
                 }`}
               >
-                Connection Details
+                Connections
               </button>
             </div>
-            <span className="text-[11px] text-zinc-400 font-mono">
-              {graph.edges.length} edges
+            <span className="text-[10px] text-[#555555] font-mono">
+              {graph.edges.length} EDGES
             </span>
           </div>
 
@@ -321,8 +312,8 @@ function RepoPageContent() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search repository files..."
-                  className="w-full text-xs px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  placeholder="Filter repository files..."
+                  className="w-full text-xs px-3 py-1.5 bg-[#000000] border border-[#333333] text-[#EDEDED] placeholder-[#555555] focus:outline-none focus:border-[#EDEDED] font-mono"
                 />
               </div>
 
@@ -340,23 +331,23 @@ function RepoPageContent() {
             </div>
           ) : (
             /* Connection Inspector View */
-            <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 text-xs">
+            <div className="flex-1 overflow-y-auto space-y-4 pr-1 text-xs font-mono">
               <div>
-                <span className="text-[11px] text-zinc-500 font-mono block mb-1">
-                  Selected File
+                <span className="text-[10px] text-[#A1A1A1] uppercase tracking-wider block mb-1">
+                  Active File
                 </span>
-                <div className="p-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 font-mono font-semibold break-all text-blue-600 dark:text-blue-400">
+                <div className="p-2 bg-[#000000] border border-[#333333] font-semibold break-all text-[#EDEDED]">
                   {selectedFile}
                 </div>
               </div>
 
               {/* Outgoing: What this file imports */}
               <div>
-                <span className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 flex items-center justify-between mb-1.5">
-                  <span className="flex items-center gap-1">
-                    <span className="text-blue-500 font-bold">↗</span> Imports ({fileConnections.imports.length})
+                <span className="text-[10px] font-semibold text-[#A1A1A1] uppercase tracking-wider flex items-center justify-between mb-1.5">
+                  <span className="flex items-center gap-1 text-[#E6A360]">
+                    &nearr; Imports ({fileConnections.imports.length})
                   </span>
-                  <span className="text-[10px] text-zinc-400 font-normal">outgoing dependencies</span>
+                  <span className="text-[#555555]">Outgoing</span>
                 </span>
                 {fileConnections.imports.length > 0 ? (
                   <div className="space-y-1.5">
@@ -364,13 +355,13 @@ function RepoPageContent() {
                       <div
                         key={idx}
                         onClick={() => setSelectedFile(imp.target)}
-                        className="p-2 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 cursor-pointer hover:bg-blue-100/50 transition font-mono text-[11px]"
+                        className="p-2 bg-[#000000] border border-[#262626] hover:border-[#E6A360] cursor-pointer transition-colors text-[11px]"
                       >
-                        <div className="font-semibold text-blue-800 dark:text-blue-300 truncate">
+                        <div className="font-semibold text-[#EDEDED] truncate">
                           {imp.target}
                         </div>
                         {imp.statement && (
-                          <div className="text-[10px] text-zinc-500 truncate mt-0.5">
+                          <div className="text-[10px] text-[#A1A1A1] truncate mt-0.5">
                             <code>{imp.statement}</code>
                           </div>
                         )}
@@ -378,7 +369,7 @@ function RepoPageContent() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-[11px] text-zinc-400 italic p-2 rounded border border-dashed border-zinc-200 dark:border-zinc-800">
+                  <div className="text-[10px] text-[#555555] p-2 bg-[#000000] border border-[#262626] uppercase">
                     Does not import any local repository files.
                   </div>
                 )}
@@ -386,11 +377,11 @@ function RepoPageContent() {
 
               {/* Incoming: Who imports this file */}
               <div>
-                <span className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 flex items-center justify-between mb-1.5">
-                  <span className="flex items-center gap-1">
-                    <span className="text-purple-500 font-bold">↙</span> Imported By ({fileConnections.callers.length})
+                <span className="text-[10px] font-semibold text-[#A1A1A1] uppercase tracking-wider flex items-center justify-between mb-1.5">
+                  <span className="flex items-center gap-1 text-[#CE7762]">
+                    &swarr; Imported By ({fileConnections.callers.length})
                   </span>
-                  <span className="text-[10px] text-zinc-400 font-normal">incoming callers</span>
+                  <span className="text-[#555555]">Incoming</span>
                 </span>
                 {fileConnections.callers.length > 0 ? (
                   <div className="space-y-1.5">
@@ -398,13 +389,13 @@ function RepoPageContent() {
                       <div
                         key={idx}
                         onClick={() => setSelectedFile(cal.source)}
-                        className="p-2 rounded-lg bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900 cursor-pointer hover:bg-purple-100/50 transition font-mono text-[11px]"
+                        className="p-2 bg-[#000000] border border-[#262626] hover:border-[#CE7762] cursor-pointer transition-colors text-[11px]"
                       >
-                        <div className="font-semibold text-purple-800 dark:text-purple-300 truncate">
+                        <div className="font-semibold text-[#EDEDED] truncate">
                           {cal.source}
                         </div>
                         {cal.statement && (
-                          <div className="text-[10px] text-zinc-500 truncate mt-0.5">
+                          <div className="text-[10px] text-[#A1A1A1] truncate mt-0.5">
                             <code>{cal.statement}</code>
                           </div>
                         )}
@@ -412,8 +403,8 @@ function RepoPageContent() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-[11px] text-zinc-400 italic p-2 rounded border border-dashed border-zinc-200 dark:border-zinc-800">
-                    No files in the repo import this file directly.
+                  <div className="text-[10px] text-[#555555] p-2 bg-[#000000] border border-[#262626] uppercase">
+                    No files import this file directly.
                   </div>
                 )}
               </div>
@@ -421,14 +412,14 @@ function RepoPageContent() {
               {/* Exported symbols */}
               {selectedNode?.exports && selectedNode.exports.length > 0 && (
                 <div>
-                  <span className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 block mb-1">
+                  <span className="text-[10px] font-semibold text-[#A1A1A1] uppercase tracking-wider block mb-1">
                     Exports ({selectedNode.exports.length})
                   </span>
                   <div className="flex flex-wrap gap-1">
                     {selectedNode.exports.map((exp) => (
                       <span
                         key={exp}
-                        className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300"
+                        className="text-[9px] px-1.5 py-0.5 bg-[#000000] border border-[#333333] text-[#EDEDED]"
                       >
                         {exp}
                       </span>
@@ -437,17 +428,17 @@ function RepoPageContent() {
                 </div>
               )}
 
-              {/* Unresolved / External Packages */}
+              {/* External Packages */}
               {selectedNode?.unresolvedImports && selectedNode.unresolvedImports.length > 0 && (
                 <div>
-                  <span className="text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 block mb-1">
-                    External Packages ({selectedNode.unresolvedImports.length})
+                  <span className="text-[10px] font-semibold text-[#A1A1A1] uppercase tracking-wider block mb-1">
+                    External Dependencies ({selectedNode.unresolvedImports.length})
                   </span>
                   <div className="flex flex-wrap gap-1">
                     {selectedNode.unresolvedImports.map((pkg) => (
                       <span
                         key={pkg}
-                        className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                        className="text-[9px] px-1.5 py-0.5 bg-[#000000] border border-[#262626] text-[#A1A1A1]"
                       >
                         {pkg}
                       </span>
@@ -462,24 +453,24 @@ function RepoPageContent() {
         {/* Center/Right Column: Interactive Graph & Code Viewer (8 cols) */}
         <div className="lg:col-span-8 flex flex-col h-full gap-3">
           {/* Top Half: Graph */}
-          <div className="h-3/5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 shadow-sm flex flex-col relative">
-            <div className="flex items-center justify-between pb-2 mb-2 border-b border-zinc-100 dark:border-zinc-800 text-xs">
+          <div className="h-3/5 bg-[#171717] border border-[#262626] p-3 flex flex-col relative">
+            <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#262626] text-xs font-mono">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-zinc-900 dark:text-zinc-100">
-                  Dependency Graph
+                <span className="font-semibold uppercase tracking-wider text-[#EDEDED] text-[10px]">
+                  Topological Dependency Graph
                 </span>
-                <span className="text-zinc-400">·</span>
-                <span className="text-zinc-500 font-mono text-[11px]">
-                  Click any file node to inspect its code & connections
+                <span className="text-[#333333]">&bull;</span>
+                <span className="text-[#A1A1A1] text-[10px] uppercase">
+                  Click any node to inspect source & local call paths
                 </span>
               </div>
-              <div className="flex items-center gap-3 text-[11px] text-zinc-500">
-                <span className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+              <div className="flex items-center gap-3 text-[10px] uppercase tracking-wider text-[#A1A1A1]">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 bg-[#EDEDED]" />
                   Selected
                 </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 bg-[#E6A360]" />
                   Flow
                 </span>
               </div>
@@ -501,13 +492,13 @@ function RepoPageContent() {
             </div>
 
             {edgeInfo && (
-              <div className="mt-2 text-xs bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-blue-900 dark:text-blue-200 px-3 py-1.5 rounded-lg flex items-center justify-between shrink-0">
+              <div className="mt-2 text-xs font-mono bg-[#000000] border border-[#333333] text-[#EDEDED] px-3 py-1.5 flex items-center justify-between shrink-0">
                 <span className="truncate">
-                  Import Statement: <code className="font-semibold">{edgeInfo}</code>
+                  Import Statement: <code className="text-[#E6A360]">{edgeInfo}</code>
                 </span>
                 <button
                   onClick={() => setEdgeInfo(null)}
-                  className="text-xs text-blue-500 hover:underline ml-2 shrink-0 cursor-pointer"
+                  className="text-[10px] text-[#A1A1A1] hover:text-[#EDEDED] underline ml-2 shrink-0 cursor-pointer uppercase"
                 >
                   Dismiss
                 </button>
@@ -528,8 +519,8 @@ function RepoPageContent() {
                 }
               />
             ) : (
-              <div className="h-full border border-dashed border-zinc-300 dark:border-zinc-800 rounded-xl flex items-center justify-center text-zinc-500 text-xs">
-                Select a file from the graph or file list to view source code
+              <div className="h-full border border-[#262626] bg-[#171717] flex items-center justify-center text-[#555555] font-mono text-[10px] uppercase tracking-wider">
+                Select a file from graph or file list to view source code
               </div>
             )}
           </div>
@@ -541,7 +532,7 @@ function RepoPageContent() {
 
 export default function RepoPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs text-zinc-500">Loading repository graph...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-[10px] font-mono uppercase text-[#A1A1A1]">Loading repository graph...</div>}>
       <RepoPageContent />
     </Suspense>
   );

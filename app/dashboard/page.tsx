@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { NavbarAuth } from '@/components/NavbarAuth';
 
 interface DashboardData {
@@ -83,88 +84,102 @@ function DashboardContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 text-xs text-zinc-500">
+      <div className="min-h-screen flex items-center justify-center bg-[#000000] text-[10px] font-mono uppercase tracking-wider text-[#A1A1A1]">
         Loading performance dashboard...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+    <div className="min-h-screen flex flex-col bg-[#000000] text-[#EDEDED]">
       {/* Top Navbar */}
-      <header className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-3 flex items-center justify-between">
+      <header className="border-b border-[#262626] bg-[#000000] px-6 py-3 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-3">
-          <a href="/" className="font-bold text-lg tracking-tight flex items-center gap-2">
-            <span className="w-6 h-6 rounded bg-blue-600 text-white flex items-center justify-center text-xs font-mono">
+          <Link href="/" className="flex items-center gap-2 group">
+            <span className="px-1.5 py-0.5 bg-[#EDEDED] text-[#000000] font-mono font-bold text-xs">
               RG
             </span>
-            RepoGym
-          </a>
-          <span className="text-zinc-400">/</span>
-          <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-            Student Dashboard
+            <span className="font-bold text-sm tracking-tight uppercase">
+              RepoGym
+            </span>
+          </Link>
+          <span className="text-[#333333]">/</span>
+          <span className="text-[10px] font-mono text-[#A1A1A1] uppercase tracking-wider">
+            Student Performance Dashboard
           </span>
         </div>
 
         <div className="flex items-center gap-3">
-          <a
+          <Link
             href="/"
-            className="text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
+            className="px-3 py-1 bg-[#EDEDED] text-[#000000] border border-[#EDEDED] hover:bg-white text-[10px] font-mono uppercase tracking-wider font-semibold transition-all duration-140"
           >
-            + Analyze New Repo
-          </a>
+            + Analyze Repo
+          </Link>
           <NavbarAuth />
         </div>
       </header>
 
       <main className="flex-1 max-w-6xl w-full mx-auto p-6 flex flex-col gap-8">
-        {/* Metric Cards Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 shadow-sm">
-            <div className="text-xs text-zinc-500 mb-1">Repositories Tracked</div>
-            <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+        {/* Metric Cells Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="bg-[#171717] border border-[#262626] p-5 flex flex-col gap-1">
+            <div className="text-[10px] font-mono text-[#A1A1A1] uppercase tracking-wider">
+              01 // Repositories Tracked
+            </div>
+            <div className="text-3xl font-bold uppercase text-[#EDEDED]">
               {repos.length}
             </div>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 shadow-sm">
-            <div className="text-xs text-zinc-500 mb-1">Total Sessions</div>
-            <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+          <div className="bg-[#171717] border border-[#262626] p-5 flex flex-col gap-1">
+            <div className="text-[10px] font-mono text-[#A1A1A1] uppercase tracking-wider">
+              02 // Total Sessions Run
+            </div>
+            <div className="text-3xl font-bold uppercase text-[#EDEDED]">
               {dashboard?.sessionsCount || 0}
             </div>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 shadow-sm">
-            <div className="text-xs text-zinc-500 mb-1">Completed Sessions</div>
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+          <div className="bg-[#171717] border border-[#262626] p-5 flex flex-col gap-1">
+            <div className="text-[10px] font-mono text-[#A1A1A1] uppercase tracking-wider">
+              03 // Completed Runs
+            </div>
+            <div className="text-3xl font-bold uppercase text-[#EDEDED]">
               {dashboard?.completedSessionsCount || 0}
             </div>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 shadow-sm">
-            <div className="text-xs text-zinc-500 mb-1">Suggested Focus Area</div>
-            <div className="text-base font-bold text-yellow-600 dark:text-yellow-400 truncate">
-              {dashboard?.suggestedFocus ? `${dashboard.suggestedFocus}` : 'All caught up!'}
+          <div className="bg-[#171717] border border-[#262626] p-5 flex flex-col gap-1">
+            <div className="text-[10px] font-mono text-[#A1A1A1] uppercase tracking-wider">
+              04 // Target Focus
+            </div>
+            <div className="text-xl font-bold uppercase text-[#E6A360] truncate">
+              {dashboard?.suggestedFocus ? dashboard.suggestedFocus : 'NOMINAL // CAUGHT UP'}
             </div>
           </div>
         </div>
 
         {/* Suggested Focus Banner */}
         {dashboard?.suggestedFocus && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 border border-blue-200 dark:border-blue-900 rounded-xl p-5 flex items-center justify-between">
+          <div className="bg-[#171717] border border-[#E6A360] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-sm font-bold text-blue-950 dark:text-blue-100">
-                Recommended Focus: Review &ldquo;{dashboard.suggestedFocus}&rdquo; Flow
+              <div className="flex items-center gap-2 font-mono text-[10px] text-[#E6A360] uppercase tracking-wider mb-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#E6A360] animate-pulse" />
+                <span>Recommended Action</span>
+              </div>
+              <h3 className="text-sm font-bold text-[#EDEDED] uppercase tracking-tight">
+                Review &ldquo;{dashboard.suggestedFocus}&rdquo; Flow
               </h3>
-              <p className="text-xs text-blue-800/80 dark:text-blue-200/80 mt-0.5">
-                Based on your recent attempts, practicing questions on this flow will maximize your code comprehension.
+              <p className="text-xs text-[#A1A1A1] mt-0.5">
+                Targeted practice on this flow will reinforce verified code execution order.
               </p>
             </div>
             <button
               onClick={() => handleStartSession('demo', dashboard.suggestedFocus || undefined)}
-              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shrink-0 transition"
+              className="px-4 py-2 bg-[#EDEDED] text-[#000000] border border-[#EDEDED] hover:bg-white text-[10px] font-mono uppercase tracking-wider font-semibold transition-all duration-140 shrink-0 cursor-pointer"
             >
-              Start Targeted Session →
+              Start Targeted Session &rarr;
             </button>
           </div>
         )}
@@ -172,45 +187,47 @@ function DashboardContent() {
         {/* My Repositories Section */}
         <section className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
-              My Repositories
+            <h2 className="text-sm font-bold uppercase tracking-tight text-[#EDEDED]">
+              Repositories Under Comprehension
             </h2>
-            <span className="text-xs text-zinc-500">{repos.length} repos</span>
+            <span className="font-mono text-[10px] text-[#A1A1A1] uppercase tracking-wider">
+              {repos.length} Repositories Indexed
+            </span>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
-            <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <div className="bg-[#000000] border border-[#262626]">
+            <div className="divide-y divide-[#262626]">
               {repos.map((repo) => (
                 <div
                   key={repo.id}
-                  className="p-4 flex items-center justify-between hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition"
+                  className="p-4 bg-[#171717] hover:bg-[#1a1a1a] transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
                 >
-                  <div className="flex flex-col gap-0.5">
+                  <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">
+                      <span className="font-mono text-xs font-semibold text-[#EDEDED]">
                         {repo.owner}/{repo.name}
                       </span>
-                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-green-50 dark:bg-green-950/60 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
-                        Ready
+                      <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 border border-[#333333] text-[#A1A1A1] bg-[#000000]">
+                        INDEXED
                       </span>
                     </div>
-                    <div className="text-xs text-zinc-500 font-mono">
-                      branch: {repo.default_branch} · {repo.sessionsCount || 0} sessions
+                    <div className="text-[10px] text-[#A1A1A1] font-mono uppercase tracking-wider">
+                      Branch: {repo.default_branch} &bull; {repo.sessionsCount || 0} Sessions Run
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <a
+                  <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider">
+                    <Link
                       href={`/repos/${repo.owner === 'demo' ? 'demo' : repo.id}`}
-                      className="text-xs px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+                      className="px-3 py-1.5 bg-transparent border border-[#333333] hover:border-[#EDEDED] text-[#A1A1A1] hover:text-[#EDEDED] transition-colors"
                     >
                       Explore Graph
-                    </a>
+                    </Link>
                     <button
                       onClick={() => handleStartSession(repo.owner === 'demo' ? 'demo' : repo.id)}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition cursor-pointer"
+                      className="px-3 py-1.5 bg-[#EDEDED] text-[#000000] border border-[#EDEDED] hover:bg-white font-semibold transition-colors cursor-pointer"
                     >
-                      Start Session
+                      Start Session &rarr;
                     </button>
                   </div>
                 </div>
@@ -222,36 +239,36 @@ function DashboardContent() {
         {/* Performance Breakdown */}
         {dashboard?.scoreTrend && dashboard.scoreTrend.length > 0 && (
           <section className="flex flex-col gap-3">
-            <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
-              Recent Session Scores
+            <h2 className="text-sm font-bold uppercase tracking-tight text-[#EDEDED]">
+              Historical Session Traces
             </h2>
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 shadow-sm">
+            <div className="bg-[#171717] border border-[#262626] p-4">
               <div className="flex flex-col gap-2">
                 {dashboard.scoreTrend.map((s, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between p-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 text-xs"
+                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-[#000000] border border-[#262626] gap-2 font-mono text-[10px] uppercase tracking-wider"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="font-mono text-zinc-500">#{idx + 1}</span>
-                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+                      <span className="text-[#555555]">#{idx + 1}</span>
+                      <span className="font-semibold text-[#EDEDED]">
                         Flow: {s.flowTag}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="font-bold text-zinc-900 dark:text-zinc-100">
+                      <span className="font-bold text-[#EDEDED]">
                         {s.score} / {s.maxScore} ({s.percentage}%)
                       </span>
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                        className={`px-2 py-0.5 border ${
                           s.percentage >= 80
-                            ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300'
+                            ? 'border-[#EDEDED] text-[#EDEDED] bg-[#171717]'
                             : s.percentage >= 50
-                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300'
-                            : 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300'
+                            ? 'border-[#E6A360] text-[#E6A360] bg-[#171717]'
+                            : 'border-[#DC8381] text-[#DC8381] bg-[#171717]'
                         }`}
                       >
-                        {s.percentage >= 80 ? 'Mastered' : s.percentage >= 50 ? 'Good' : 'Needs Review'}
+                        {s.percentage >= 80 ? 'MASTERED' : s.percentage >= 50 ? 'PARTIAL' : 'NEEDS REVIEW'}
                       </span>
                     </div>
                   </div>
@@ -267,9 +284,8 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs text-zinc-500">Loading...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-[10px] font-mono uppercase text-[#A1A1A1]">Loading dashboard...</div>}>
       <DashboardContent />
     </Suspense>
   );
 }
-

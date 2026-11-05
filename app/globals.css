@@ -2,26 +2,126 @@
 @import "@xyflow/react/dist/style.css";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --theme-page: #000000;
+  --theme-cell: #171717;
+  --theme-cell-hover: #1f1f1f;
+  --theme-muted: #a1a1a1;
+  --theme-text: #ededed;
+  --theme-border: #262626;
+  --theme-border-subtle: #333333;
+  --theme-border-strong: #ededed;
+  --theme-scrollbar: #555555;
+  --theme-amber: #e6a360;
+  --theme-rose: #dc8381;
+  --theme-cream: #fff0d1;
+  --font-sans: "Bricolage Grotesque", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --background: #000000;
+  --foreground: #ededed;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-page: #000000;
+  --color-cell: #171717;
+  --color-cell-hover: #1f1f1f;
+  --color-muted: #a1a1a1;
+  --color-text: #ededed;
+  --color-border-primary: #262626;
+  --color-border-secondary: #333333;
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #000000 !important;
+  color: #ededed !important;
+  font-family: var(--font-sans);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom technical scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+::-webkit-scrollbar-thumb {
+  background: #262626;
+  border-radius: 0px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+}
+
+/* React Flow Dark Technical Theme Overrides */
+.react-flow {
+  background-color: #000000 !important;
+}
+
+.react-flow__background {
+  background-color: #000000 !important;
+}
+
+.react-flow__controls {
+  background-color: #171717 !important;
+  border: 1px solid #262626 !important;
+  box-shadow: none !important;
+  border-radius: 0px !important;
+  overflow: hidden;
+}
+
+.react-flow__controls-button {
+  background-color: #171717 !important;
+  border-bottom: 1px solid #262626 !important;
+  color: #a1a1a1 !important;
+  border-radius: 0px !important;
+  fill: #a1a1a1 !important;
+  transition: all 0.14s ease !important;
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none !important;
+}
+
+.react-flow__controls-button:hover {
+  background-color: #262626 !important;
+  color: #ededed !important;
+  fill: #ededed !important;
+}
+
+.react-flow__controls-button svg {
+  fill: currentColor !important;
+}
+
+.react-flow__minimap {
+  background-color: #000000 !important;
+  border: 1px solid #262626 !important;
+  border-radius: 0px !important;
+}
+
+.react-flow__minimap-mask {
+  fill: rgba(0, 0, 0, 0.8) !important;
+}
+
+.react-flow__edge-text {
+  font-family: var(--font-mono) !important;
+  font-size: 10px !important;
+  text-transform: uppercase !important;
+}
+
+/* Subtle selection styling */
+::selection {
+  background-color: #ededed;
+  color: #000000;
 }

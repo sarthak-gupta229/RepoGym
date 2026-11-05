@@ -82,29 +82,25 @@ export function NavbarAuth() {
   };
 
   if (loading && !user) {
-    return <div className="w-16 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 animate-pulse" />;
+    return <div className="w-16 h-6 bg-[#171717] border border-[#262626] animate-pulse" />;
   }
 
   if (user) {
-    const displayName = user.name || user.email.split('@')[0];
-    const initial = displayName.charAt(0).toUpperCase();
+    const displayName = (user.name || user.email.split('@')[0]).toUpperCase();
 
     return (
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2 font-mono text-[10px] uppercase">
         <Link
           href="/dashboard"
-          className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition text-xs text-zinc-700 dark:text-zinc-200"
+          className="flex items-center gap-1.5 px-2.5 py-1 bg-[#171717] border border-[#262626] hover:border-[#333333] transition-colors text-[#EDEDED]"
+          title={user.email}
         >
-          <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[10px]">
-            {initial}
-          </div>
-          <span className="font-medium max-w-[120px] truncate" title={user.email}>
-            {displayName}
-          </span>
+          <span className="w-1.5 h-1.5 rounded-full bg-[#EDEDED]" />
+          <span className="truncate max-w-[120px] tracking-wide">{displayName}</span>
         </Link>
         <button
           onClick={handleSignOut}
-          className="text-xs px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition cursor-pointer"
+          className="px-2.5 py-1 bg-transparent border border-[#333333] text-[#A1A1A1] hover:text-[#EDEDED] hover:border-[#EDEDED] transition-colors cursor-pointer tracking-wider"
         >
           Sign Out
         </button>
@@ -113,16 +109,16 @@ export function NavbarAuth() {
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider">
       <Link
         href="/signin"
-        className="text-xs font-medium px-3 py-1.5 rounded-lg text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+        className="px-2.5 py-1 bg-transparent border border-[#333333] text-[#A1A1A1] hover:text-[#EDEDED] hover:border-[#EDEDED] transition-colors"
       >
         Sign In
       </Link>
       <Link
         href="/signup"
-        className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-500/20 transition"
+        className="px-3 py-1 bg-[#EDEDED] text-[#000000] border border-[#EDEDED] hover:bg-white font-medium transition-colors"
       >
         Sign Up
       </Link>
