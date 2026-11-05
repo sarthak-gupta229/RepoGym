@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { DependencyGraph, buildGraph } from './graph';
 import { Flow, detectFlows } from './select';
 import { ExpectedFact, Citation } from './schemas';
@@ -78,7 +80,32 @@ export interface FeedbackFlag {
   created_at: string;
 }
 
-class InMemoryStore {
+export interface UserRepo {
+  id: string;
+  user_id: string;
+  repo_id: string;
+  last_visited_at: string;
+  created_at: string;
+}
+
+export interface VisitedRepoItem extends Repo {
+  last_visited_at: string;
+  sessionsCount: number;
+  latestSession?: {
+    id: string;
+    status: 'in_progress' | 'completed' | 'paused';
+    current_index: number;
+    total_questions: number;
+    created_at: string;
+  } | null;
+  latestCommitSha?: string | null;
+  analysisId?: string | null;
+}
+
+const DATA_DIR = path.join(process.cwd(), '.data');
+const DB_FILE = path.join(DATA_DIR, 'repogym-db.json');
+
+class PersistentStore {
   users = new Map<string, User>();
   userCredentials = new Map<string, { passwordHash: string; salt: string }>();
   repos = new Map<string, Repo>();
@@ -87,47 +114,165 @@ class InMemoryStore {
   questions = new Map<string, Question>();
   attempts = new Map<string, Attempt>();
   feedback = new Map<string, FeedbackFlag>();
+  userRepos = new Map<string, UserRepo>();
 
   constructor() {
-    this.initDemoData();
+    this.loadFromDisk();
   }
 
-  private initDemoData() {
-    const demoRepo: Repo = {
-      id: 'repo-demo',
-      owner: 'demo',
-      name: 'login-service',
-      default_branch: 'main',
-      created_at: new Date().toISOString(),
-    };
-    this.repos.set(demoRepo.id, demoRepo);
+  private ensureDemoData() {
+    if (!this.repos.has('repo-demo')) {
+      const demoRepo: Repo = {
+        id: 'repo-demo',
+        owner: 'demo',
+        name: 'login-service',
+        default_branch: 'main',
+        created_at: new Date().toISOString(),
+      };
+      this.repos.set(demoRepo.id, demoRepo);
+    }
 
-    const demoGraph = buildGraph(loginFixture);
-    const demoFlows = detectFlows(loginFixture);
+    if (!this.analyses.has('demo')) {
+      const demoGraph = buildGraph(loginFixture);
+      const demoFlows = detectFlows(loginFixture);
 
-    const demoAnalysis: Analysis = {
-      id: 'demo',
-      repo_id: demoRepo.id,
-      commit_sha: 'commit-demo-12345',
-      file_map: loginFixture,
-      graph: demoGraph,
-      flows: demoFlows,
-      truncated: false,
-      created_at: new Date().toISOString(),
-    };
-    this.analyses.set(demoAnalysis.id, demoAnalysis);
+      const demoAnalysis: Analysis = {
+        id: 'demo',
+        repo_id: 'repo-demo',
+        commit_sha: 'commit-demo-12345',
+        file_map: loginFixture,
+        graph: demoGraph,
+        flows: demoFlows,
+        truncated: false,
+        created_at: new Date().toISOString(),
+      };
+      this.analyses.set(demoAnalysis.id, demoAnalysis);
+    }
 
-    const defaultUser: User = {
-      id: 'demo-user-1',
-      email: 'demo@repogym.dev',
-      name: 'Demo Student',
-      created_at: new Date().toISOString(),
-    };
-    this.users.set(defaultUser.id, defaultUser);
-    this.userCredentials.set(defaultUser.id, {
-      salt: 'repogym_demo_salt_2026',
-      passwordHash: '49b3239f5a9b859351e867098074f0028b2f563a7f6e6e1b5f3b3bdd951e4dfb',
-    });
+    if (!this.users.has('demo-user-1')) {
+      const defaultUser: User = {
+        id: 'demo-user-1',
+        email: 'demo@repogym.dev',
+        name: 'Demo Student',
+        created_at: new Date().toISOString(),
+      };
+      this.users.set(defaultUser.id, defaultUser);
+      this.userCredentials.set(defaultUser.id, {
+        salt: 'repogym_demo_salt_2026',
+        passwordHash: '49b3239f5a9b859351e867098074f0028b2f563a7f6e6e1b5f3b3bdd951e4dfb',
+      });
+    }
+
+    // Ensure demo user has a visit record for demo repo
+    const demoVisit = Array.from(this.userRepos.values()).find(
+      (ur) => ur.user_id === 'demo-user-1' && ur.repo_id === 'repo-demo'
+    );
+    if (!demoVisit) {
+      const ur: UserRepo = {
+        id: 'ur-demo-default',
+        user_id: 'demo-user-1',
+        repo_id: 'repo-demo',
+        last_visited_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      };
+      this.userRepos.set(ur.id, ur);
+    }
+  }
+
+  private loadFromDisk() {
+    if (typeof window !== 'undefined') return;
+    try {
+      if (!fs.existsSync(DB_FILE)) {
+        this.ensureDemoData();
+        this.saveToDisk();
+        return;
+      }
+      const raw = fs.readFileSync(DB_FILE, 'utf8');
+      if (!raw.trim()) {
+        this.ensureDemoData();
+        return;
+      }
+      const data = JSON.parse(raw);
+      if (Array.isArray(data.users)) {
+        for (const u of data.users) this.users.set(u.id, u);
+      }
+      if (Array.isArray(data.userCredentials)) {
+        for (const [id, cred] of data.userCredentials) this.userCredentials.set(id, cred);
+      }
+      if (Array.isArray(data.repos)) {
+        for (const r of data.repos) this.repos.set(r.id, r);
+      }
+      if (Array.isArray(data.analyses)) {
+        for (const a of data.analyses) this.analyses.set(a.id, a);
+      }
+      if (Array.isArray(data.sessions)) {
+        for (const s of data.sessions) this.sessions.set(s.id, s);
+      }
+      if (Array.isArray(data.questions)) {
+        for (const q of data.questions) this.questions.set(q.id, q);
+      }
+      if (Array.isArray(data.attempts)) {
+        for (const att of data.attempts) this.attempts.set(att.id, att);
+      }
+      if (Array.isArray(data.feedback)) {
+        for (const f of data.feedback) this.feedback.set(f.id, f);
+      }
+      if (Array.isArray(data.userRepos)) {
+        for (const ur of data.userRepos) this.userRepos.set(ur.id, ur);
+      }
+
+      this.ensureDemoData();
+    } catch (err) {
+      console.warn('Failed to load database from disk, fallback to in-memory defaults:', err);
+      this.ensureDemoData();
+    }
+  }
+
+  private saveToDisk() {
+    if (typeof window !== 'undefined') return;
+    try {
+      if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+      }
+      const serialized = JSON.stringify({
+        users: Array.from(this.users.values()),
+        userCredentials: Array.from(this.userCredentials.entries()),
+        repos: Array.from(this.repos.values()),
+        analyses: Array.from(this.analyses.values()),
+        sessions: Array.from(this.sessions.values()),
+        questions: Array.from(this.questions.values()),
+        attempts: Array.from(this.attempts.values()),
+        feedback: Array.from(this.feedback.values()),
+        userRepos: Array.from(this.userRepos.values()),
+      });
+      const tmpFile = `${DB_FILE}.tmp.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2, 7)}`;
+      fs.writeFileSync(tmpFile, serialized, 'utf8');
+      try {
+        fs.renameSync(tmpFile, DB_FILE);
+      } catch {
+        // Fallback in case of parallel rename race
+        fs.writeFileSync(DB_FILE, serialized, 'utf8');
+        try {
+          fs.unlinkSync(tmpFile);
+        } catch {
+          // ignore
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to persist database to disk:', err);
+    }
+  }
+
+  private async syncToSupabase(table: string, payload: Record<string, unknown>) {
+    if (typeof window !== 'undefined') return;
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return;
+    try {
+      const { createServiceClient } = await import('./supabase/service');
+      const supabase = createServiceClient();
+      await supabase.from(table).upsert(payload as never);
+    } catch {
+      // Gracefully ignore Supabase error (e.g. table not created yet or network offline)
+    }
   }
 
   // Users
@@ -165,6 +310,7 @@ class InMemoryStore {
         salt: data.salt,
       });
     }
+    this.saveToDisk();
     return user;
   }
 
@@ -180,6 +326,7 @@ class InMemoryStore {
     salt: string
   ): Promise<void> {
     this.userCredentials.set(userId, { passwordHash, salt });
+    this.saveToDisk();
   }
 
   // Repos
@@ -188,20 +335,34 @@ class InMemoryStore {
   }
 
   async getRepoByOwnerName(owner: string, name: string): Promise<Repo | null> {
+    const o = owner.toLowerCase().trim();
+    const n = name.toLowerCase().trim();
     for (const repo of this.repos.values()) {
-      if (repo.owner.toLowerCase() === owner.toLowerCase() && repo.name.toLowerCase() === name.toLowerCase()) {
+      if (repo.owner.toLowerCase().trim() === o && repo.name.toLowerCase().trim() === n) {
         return repo;
       }
     }
     return null;
   }
 
-  async saveRepo(repo: Omit<Repo, 'id' | 'created_at'>): Promise<Repo> {
+  async saveRepo(repo: Omit<Repo, 'id' | 'created_at'>, userId?: string): Promise<Repo> {
     const existing = await this.getRepoByOwnerName(repo.owner, repo.name);
     if (existing) {
       existing.default_branch = repo.default_branch;
+      this.saveToDisk();
+      if (userId) {
+        await this.recordUserRepoVisit(userId, existing.id);
+      }
+      this.syncToSupabase('repos', {
+        id: existing.id,
+        owner: existing.owner,
+        name: existing.name,
+        default_branch: existing.default_branch,
+        created_at: existing.created_at,
+      });
       return existing;
     }
+
     const id = `repo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const newRepo: Repo = {
       ...repo,
@@ -209,7 +370,127 @@ class InMemoryStore {
       created_at: new Date().toISOString(),
     };
     this.repos.set(id, newRepo);
+    this.saveToDisk();
+    if (userId) {
+      await this.recordUserRepoVisit(userId, newRepo.id);
+    }
+    this.syncToSupabase('repos', {
+      id: newRepo.id,
+      owner: newRepo.owner,
+      name: newRepo.name,
+      default_branch: newRepo.default_branch,
+      created_at: newRepo.created_at,
+    });
     return newRepo;
+  }
+
+  // User Repo Visits Tracking
+  async recordUserRepoVisit(userId: string, repoId: string): Promise<UserRepo> {
+    const existingVisit = Array.from(this.userRepos.values()).find(
+      (ur) => ur.user_id === userId && ur.repo_id === repoId
+    );
+    const now = new Date().toISOString();
+    if (existingVisit) {
+      existingVisit.last_visited_at = now;
+      this.saveToDisk();
+      this.syncToSupabase('user_repos', {
+        id: existingVisit.id,
+        user_id: existingVisit.user_id,
+        repo_id: existingVisit.repo_id,
+        last_visited_at: now,
+      });
+      return existingVisit;
+    }
+
+    const id = `ur-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const userRepo: UserRepo = {
+      id,
+      user_id: userId,
+      repo_id: repoId,
+      last_visited_at: now,
+      created_at: now,
+    };
+    this.userRepos.set(id, userRepo);
+    this.saveToDisk();
+    this.syncToSupabase('user_repos', {
+      id: userRepo.id,
+      user_id: userRepo.user_id,
+      repo_id: userRepo.repo_id,
+      last_visited_at: userRepo.last_visited_at,
+      created_at: userRepo.created_at,
+    });
+    return userRepo;
+  }
+
+  async getUserRepos(userId: string): Promise<VisitedRepoItem[]> {
+    // Collect visited repo IDs for this user
+    const userVisits = Array.from(this.userRepos.values()).filter((ur) => ur.user_id === userId);
+    const repoVisitMap = new Map<string, string>(); // repo_id -> last_visited_at
+    for (const v of userVisits) {
+      repoVisitMap.set(v.repo_id, v.last_visited_at);
+    }
+
+    // Also include repos that user has sessions in
+    const userSessions = Array.from(this.sessions.values()).filter((s) => s.user_id === userId);
+    for (const s of userSessions) {
+      const analysis = this.analyses.get(s.analysis_id);
+      if (analysis && !repoVisitMap.has(analysis.repo_id)) {
+        repoVisitMap.set(analysis.repo_id, s.updated_at || s.created_at);
+      }
+    }
+
+    // Fallback: If no visited repos recorded yet for this user, include all available repos
+    if (repoVisitMap.size === 0) {
+      for (const r of this.repos.values()) {
+        repoVisitMap.set(r.id, r.created_at);
+      }
+    }
+
+    const result: VisitedRepoItem[] = [];
+
+    for (const [repoId, lastVisitedAt] of repoVisitMap.entries()) {
+      const repo = this.repos.get(repoId);
+      if (!repo) continue;
+
+      // Filter sessions belonging to this user for this repo
+      const repoSessions = userSessions
+        .filter((s) => {
+          const a = this.analyses.get(s.analysis_id);
+          return a?.repo_id === repo.id;
+        })
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      // Latest analysis for this repo
+      const repoAnalyses = Array.from(this.analyses.values())
+        .filter((a) => a.repo_id === repo.id)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      const latestAnalysis = repoAnalyses[0] || null;
+      const latestSession = repoSessions[0] || null;
+
+      result.push({
+        ...repo,
+        last_visited_at: lastVisitedAt,
+        sessionsCount: repoSessions.length,
+        latestSession: latestSession
+          ? {
+              id: latestSession.id,
+              status: latestSession.status,
+              current_index: latestSession.current_index,
+              total_questions: latestSession.total_questions,
+              created_at: latestSession.created_at,
+            }
+          : null,
+        latestCommitSha: latestAnalysis?.commit_sha || null,
+        analysisId: latestAnalysis?.id || (repo.id === 'repo-demo' ? 'demo' : null),
+      });
+    }
+
+    // Sort descending by last_visited_at
+    result.sort(
+      (a, b) => new Date(b.last_visited_at).getTime() - new Date(a.last_visited_at).getTime()
+    );
+
+    return result;
   }
 
   // Analyses
@@ -237,6 +518,17 @@ class InMemoryStore {
       created_at: new Date().toISOString(),
     };
     this.analyses.set(id, newAnalysis);
+    this.saveToDisk();
+    this.syncToSupabase('analyses', {
+      id: newAnalysis.id,
+      repo_id: newAnalysis.repo_id,
+      commit_sha: newAnalysis.commit_sha,
+      file_map: newAnalysis.file_map,
+      graph: newAnalysis.graph,
+      flows: newAnalysis.flows,
+      truncated: newAnalysis.truncated,
+      created_at: newAnalysis.created_at,
+    });
     return newAnalysis;
   }
 
@@ -268,6 +560,25 @@ class InMemoryStore {
       updated_at: new Date().toISOString(),
     };
     this.sessions.set(id, session);
+    this.saveToDisk();
+
+    // Also record user repo visit if analysis exists
+    const analysis = this.analyses.get(analysisId);
+    if (analysis) {
+      await this.recordUserRepoVisit(userId, analysis.repo_id);
+    }
+
+    this.syncToSupabase('sessions', {
+      id: session.id,
+      user_id: session.user_id,
+      analysis_id: session.analysis_id,
+      flow_tag: session.flow_tag,
+      status: session.status,
+      total_questions: session.total_questions,
+      current_index: session.current_index,
+      created_at: session.created_at,
+      updated_at: session.updated_at,
+    });
     return session;
   }
 
@@ -280,6 +591,18 @@ class InMemoryStore {
       updated_at: new Date().toISOString(),
     };
     this.sessions.set(id, updated);
+    this.saveToDisk();
+    this.syncToSupabase('sessions', {
+      id: updated.id,
+      user_id: updated.user_id,
+      analysis_id: updated.analysis_id,
+      flow_tag: updated.flow_tag,
+      status: updated.status,
+      total_questions: updated.total_questions,
+      current_index: updated.current_index,
+      created_at: updated.created_at,
+      updated_at: updated.updated_at,
+    });
     return updated;
   }
 
@@ -292,6 +615,17 @@ class InMemoryStore {
       created_at: new Date().toISOString(),
     };
     this.questions.set(id, question);
+    this.saveToDisk();
+    this.syncToSupabase('questions', {
+      id: question.id,
+      session_id: question.session_id,
+      analysis_id: question.analysis_id,
+      flow_tag: question.flow_tag,
+      position: question.position,
+      question: question.question,
+      expected_facts: question.expected_facts,
+      created_at: question.created_at,
+    });
     return question;
   }
 
@@ -314,6 +648,22 @@ class InMemoryStore {
       created_at: new Date().toISOString(),
     };
     this.attempts.set(id, attempt);
+    this.saveToDisk();
+    this.syncToSupabase('attempts', {
+      id: attempt.id,
+      question_id: attempt.question_id,
+      user_id: attempt.user_id,
+      answer: attempt.answer,
+      score: attempt.score,
+      max_score: attempt.max_score,
+      verdict: attempt.verdict,
+      covered: attempt.covered,
+      missed: attempt.missed,
+      feedback: attempt.feedback,
+      citations: attempt.citations,
+      follow_up_question: attempt.follow_up_question,
+      created_at: attempt.created_at,
+    });
     return attempt;
   }
 
@@ -345,6 +695,15 @@ class InMemoryStore {
       created_at: new Date().toISOString(),
     };
     this.feedback.set(id, flag);
+    this.saveToDisk();
+    this.syncToSupabase('feedback_flags', {
+      id: flag.id,
+      attempt_id: flag.attempt_id,
+      user_id: flag.user_id,
+      helpful: flag.helpful,
+      note: flag.note,
+      created_at: flag.created_at,
+    });
     return flag;
   }
 
@@ -356,7 +715,6 @@ class InMemoryStore {
   }
 }
 
-const globalForStore = globalThis as unknown as { store: InMemoryStore };
-export const store = globalForStore.store || new InMemoryStore();
+const globalForStore = globalThis as unknown as { store: PersistentStore };
+export const store = globalForStore.store || new PersistentStore();
 globalForStore.store = store;
-

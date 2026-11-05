@@ -7,7 +7,7 @@ import { DependencyGraph } from '@/components/DependencyGraph';
 import { FileViewer } from '@/components/FileViewer';
 import { QuestionPanel } from '@/components/QuestionPanel';
 import { GradeCard } from '@/components/GradeCard';
-import { Session, Question, Attempt, Analysis } from '@/lib/store';
+import type { Session, Question, Attempt, Analysis } from '@/lib/store';
 import { Citation } from '@/lib/schemas';
 import { NavbarAuth } from '@/components/NavbarAuth';
 

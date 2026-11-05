@@ -15,7 +15,11 @@ export async function POST(
   }
 
   const { id } = await params;
-  const repo = await store.getRepo(id);
+  let repo = await store.getRepo(id);
+  if (!repo && id === 'demo') {
+    repo = await store.getRepo('repo-demo');
+  }
+
   if (!repo) {
     return NextResponse.json({ error: 'Repo not found' }, { status: 404 });
   }
@@ -39,6 +43,9 @@ export async function POST(
       });
     }
 
+    // Record user visit
+    await store.recordUserRepoVisit(user.id, repo.id);
+
     return NextResponse.json({ repo, analysis });
   } catch (err) {
     if (err instanceof GitHubError) {
@@ -47,4 +54,3 @@ export async function POST(
     return NextResponse.json({ error: 'Re-analysis failed' }, { status: 500 });
   }
 }
-

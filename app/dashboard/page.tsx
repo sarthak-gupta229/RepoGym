@@ -27,6 +27,37 @@ interface RepoData {
   name: string;
   default_branch: string;
   sessionsCount: number;
+  last_visited_at?: string;
+  latestCommitSha?: string | null;
+  analysisId?: string | null;
+  latestSession?: {
+    id: string;
+    status: 'in_progress' | 'completed' | 'paused';
+    current_index: number;
+    total_questions: number;
+    created_at: string;
+  } | null;
+}
+
+function formatRelativeTime(dateString?: string): string {
+  if (!dateString) return 'RECENT';
+  try {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMinutes < 1) return 'JUST NOW';
+    if (diffMinutes < 60) return `${diffMinutes}M AGO`;
+    if (diffHours < 24) return `${diffHours}H AGO`;
+    if (diffDays === 1) return 'YESTERDAY';
+    if (diffDays < 7) return `${diffDays}D AGO`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
+  } catch {
+    return 'RECENT';
+  }
 }
 
 function DashboardContent() {
@@ -187,52 +218,113 @@ function DashboardContent() {
         {/* My Repositories Section */}
         <section className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-tight text-[#EDEDED]">
-              Repositories Under Comprehension
-            </h2>
+            <div>
+              <h2 className="text-sm font-bold uppercase tracking-tight text-[#EDEDED]">
+                Repositories Under Comprehension
+              </h2>
+              <p className="text-[10px] font-mono text-[#A1A1A1] uppercase tracking-wider mt-0.5">
+                All previously indexed and analyzed repositories in your database
+              </p>
+            </div>
             <span className="font-mono text-[10px] text-[#A1A1A1] uppercase tracking-wider">
               {repos.length} Repositories Indexed
             </span>
           </div>
 
           <div className="bg-[#000000] border border-[#262626]">
-            <div className="divide-y divide-[#262626]">
-              {repos.map((repo) => (
-                <div
-                  key={repo.id}
-                  className="p-4 bg-[#171717] hover:bg-[#1a1a1a] transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+            {repos.length === 0 ? (
+              <div className="p-8 text-center flex flex-col items-center justify-center gap-3">
+                <p className="text-xs font-mono text-[#A1A1A1] uppercase tracking-wider">
+                  No repositories visited yet.
+                </p>
+                <Link
+                  href="/"
+                  className="px-4 py-2 bg-[#EDEDED] text-[#000000] border border-[#EDEDED] hover:bg-white text-[10px] font-mono uppercase tracking-wider font-semibold transition-all"
                 >
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-semibold text-[#EDEDED]">
-                        {repo.owner}/{repo.name}
-                      </span>
-                      <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 border border-[#333333] text-[#A1A1A1] bg-[#000000]">
-                        INDEXED
-                      </span>
-                    </div>
-                    <div className="text-[10px] text-[#A1A1A1] font-mono uppercase tracking-wider">
-                      Branch: {repo.default_branch} &bull; {repo.sessionsCount || 0} Sessions Run
-                    </div>
-                  </div>
+                  + Analyze First Repository
+                </Link>
+              </div>
+            ) : (
+              <div className="divide-y divide-[#262626]">
+                {repos.map((repo) => {
+                  const targetId = repo.owner === 'demo' ? 'demo' : repo.id;
+                  const targetAnalysisId = repo.analysisId || targetId;
+                  const hasInProgressSession = repo.latestSession?.status === 'in_progress';
 
-                  <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider">
-                    <Link
-                      href={`/repos/${repo.owner === 'demo' ? 'demo' : repo.id}`}
-                      className="px-3 py-1.5 bg-transparent border border-[#333333] hover:border-[#EDEDED] text-[#A1A1A1] hover:text-[#EDEDED] transition-colors"
+                  return (
+                    <div
+                      key={repo.id}
+                      className="p-4 bg-[#171717] hover:bg-[#1a1a1a] transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                     >
-                      Explore Graph
-                    </Link>
-                    <button
-                      onClick={() => handleStartSession(repo.owner === 'demo' ? 'demo' : repo.id)}
-                      className="px-3 py-1.5 bg-[#EDEDED] text-[#000000] border border-[#EDEDED] hover:bg-white font-semibold transition-colors cursor-pointer"
-                    >
-                      Start Session &rarr;
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                      <div className="flex flex-col gap-1.5 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link
+                            href={`/repos/${targetId}`}
+                            className="font-mono text-xs font-bold text-[#EDEDED] hover:underline"
+                          >
+                            {repo.owner}/{repo.name}
+                          </Link>
+                          <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 border border-[#333333] text-[#A1A1A1] bg-[#000000]">
+                            INDEXED
+                          </span>
+                          {hasInProgressSession && (
+                            <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 border border-[#E6A360] text-[#E6A360] bg-[#1a150e] animate-pulse">
+                              SESSION IN PROGRESS (Q{repo.latestSession?.current_index || 1}/{repo.latestSession?.total_questions || 5})
+                            </span>
+                          )}
+                          {repo.latestSession?.status === 'completed' && (
+                            <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 border border-[#EDEDED] text-[#EDEDED] bg-[#000000]">
+                              COMPLETED
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="text-[10px] text-[#A1A1A1] font-mono uppercase tracking-wider flex flex-wrap items-center gap-2">
+                          <span>Branch: {repo.default_branch}</span>
+                          <span className="text-[#333333]">&bull;</span>
+                          <span>{repo.sessionsCount || 0} Sessions Run</span>
+                          {repo.last_visited_at && (
+                            <>
+                              <span className="text-[#333333]">&bull;</span>
+                              <span className="text-[#888888]">Visited {formatRelativeTime(repo.last_visited_at)}</span>
+                            </>
+                          )}
+                          {repo.latestCommitSha && (
+                            <>
+                              <span className="text-[#333333]">&bull;</span>
+                              <span className="text-[#555555]">SHA: {repo.latestCommitSha.slice(0, 7)}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] uppercase tracking-wider shrink-0">
+                        {hasInProgressSession && repo.latestSession && (
+                          <Link
+                            href={`/sessions/${repo.latestSession.id}`}
+                            className="px-3 py-1.5 bg-[#E6A360] text-[#000000] border border-[#E6A360] hover:bg-[#f0b070] font-bold transition-colors cursor-pointer"
+                          >
+                            Resume Session &rarr;
+                          </Link>
+                        )}
+                        <Link
+                          href={`/repos/${targetId}`}
+                          className="px-3 py-1.5 bg-transparent border border-[#333333] hover:border-[#EDEDED] text-[#A1A1A1] hover:text-[#EDEDED] transition-colors"
+                        >
+                          Explore Graph
+                        </Link>
+                        <button
+                          onClick={() => handleStartSession(targetAnalysisId)}
+                          className="px-3 py-1.5 bg-[#EDEDED] text-[#000000] border border-[#EDEDED] hover:bg-white font-semibold transition-colors cursor-pointer"
+                        >
+                          Start Session &rarr;
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
 

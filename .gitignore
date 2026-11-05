@@ -10,6 +10,11 @@
 !.yarn/releases
 !.yarn/versions
 
+# local data directory
+.data/
+*.sqlite
+*.sqlite-journal
+
 # testing
 /coverage
 

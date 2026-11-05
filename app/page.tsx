@@ -1,9 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { NavbarAuth } from '@/components/NavbarAuth';
+
+interface VisitedRepo {
+  id: string;
+  owner: string;
+  name: string;
+  default_branch: string;
+  sessionsCount?: number;
+  last_visited_at?: string;
+  latestCommitSha?: string | null;
+}
 
 export default function HomePage() {
   const router = useRouter();
@@ -11,6 +21,24 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [recentRepos, setRecentRepos] = useState<VisitedRepo[]>([]);
+
+  useEffect(() => {
+    async function loadRecentRepos() {
+      try {
+        const res = await fetch('/api/repos');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.repos)) {
+            setRecentRepos(data.repos);
+          }
+        }
+      } catch {
+        // Ignore failure in loading recent repos
+      }
+    }
+    loadRecentRepos();
+  }, []);
 
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +73,14 @@ export default function HomePage() {
       );
       setLoading(false);
       setStatusMessage('');
+    }
+  };
+
+  const selectRepo = (owner: string, name: string, id: string) => {
+    if (owner === 'demo') {
+      router.push('/repos/demo');
+    } else {
+      router.push(`/repos/${id}`);
     }
   };
 
@@ -153,6 +189,32 @@ export default function HomePage() {
             )}
           </form>
 
+          {/* Previously Visited Repositories in User's Database */}
+          {recentRepos.length > 0 && (
+            <div className="mt-4 pt-3 border-t border-[#262626]">
+              <div className="flex items-center justify-between text-[10px] font-mono text-[#A1A1A1] uppercase tracking-wider mb-2">
+                <span>Stored Repositories In Your Database:</span>
+                <Link href="/dashboard" className="text-[#EDEDED] hover:underline">
+                  View All in Dashboard &rarr;
+                </Link>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {recentRepos.slice(0, 4).map((repo) => (
+                  <button
+                    key={repo.id}
+                    type="button"
+                    onClick={() => selectRepo(repo.owner, repo.name, repo.id)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#000000] border border-[#333333] hover:border-[#EDEDED] text-[10px] font-mono text-[#EDEDED] transition-colors cursor-pointer group"
+                    title={`Open ${repo.owner}/${repo.name}`}
+                  >
+                    <span>{repo.owner}/{repo.name}</span>
+                    <span className="text-[#666666] group-hover:text-[#EDEDED]">&rarr;</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Sample repo quick link */}
           <div className="mt-4 pt-3 border-t border-[#262626] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 font-mono text-[10px] text-[#A1A1A1] uppercase tracking-wider">
             <span>Or test with a pre-indexed fixture:</span>
@@ -181,45 +243,29 @@ export default function HomePage() {
 
           <div className="p-6 bg-[#171717] border-b sm:border-b-0 sm:border-r border-[#262626] flex flex-col gap-2">
             <span className="font-mono text-[10px] text-[#A1A1A1] uppercase tracking-wider">
-              02 // Execution Tracing
+              02 // Flow Tracing
             </span>
             <h3 className="font-bold text-sm text-[#EDEDED] uppercase tracking-tight">
-              Request Flow Scenarios
+              Isolated Execution Paths
             </h3>
             <p className="text-xs text-[#A1A1A1] leading-relaxed">
-              Automated route detection for Express, Next.js, and FastAPI. Tests execution order step-by-step through the call chain.
+              Automatic AST route detection extracts API endpoints and traces execution up to 3 hops deep for bounded comprehension.
             </p>
           </div>
 
           <div className="p-6 bg-[#171717] flex flex-col gap-2">
             <span className="font-mono text-[10px] text-[#A1A1A1] uppercase tracking-wider">
-              03 // Ground Truth
+              03 // Line-Cited Evaluation
             </span>
             <h3 className="font-bold text-sm text-[#EDEDED] uppercase tracking-tight">
-              Line-Cited Grading
+              Ground-Truth Verification
             </h3>
             <p className="text-xs text-[#A1A1A1] leading-relaxed">
-              Zero hallucinations. Every grading verdict and fact is verified against exact file bounds and source lines you can inspect.
+              Every AI grade cites exact line spans and checks required architectural facts against ingested source files.
             </p>
           </div>
         </div>
       </main>
-
-      {/* Editorial Footer */}
-      <footer className="border-t border-[#262626] py-5 px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[10px] font-mono text-[#A1A1A1] uppercase tracking-wider">
-        <div>
-          <span>RepoGym // Code Comprehension & Verification Engine</span>
-        </div>
-        <div className="flex items-center gap-4 text-[#555555]">
-          <span>Next.js App Router</span>
-          <span>&bull;</span>
-          <span>React Flow</span>
-          <span>&bull;</span>
-          <span>Dagre</span>
-          <span>&bull;</span>
-          <span>OpenRouter</span>
-        </div>
-      </footer>
     </div>
   );
 }

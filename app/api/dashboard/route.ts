@@ -14,22 +14,23 @@ export async function GET(req: NextRequest) {
 
   // Score trend across completed sessions
   const completedSessions = sessions.filter((s) => s.status === 'completed');
-  const scoreTrend = completedSessions.map((s) => {
-    const sessionAttempts = attempts.filter(async (a) => {
-      const q = await store.getQuestion(a.question_id);
-      return q?.session_id === s.id;
-    });
-    const totalScore = sessionAttempts.reduce((acc, a) => acc + a.score, 0);
-    const maxScore = sessionAttempts.reduce((acc, a) => acc + a.max_score, 0) || 10;
-    return {
-      sessionId: s.id,
-      flowTag: s.flow_tag,
-      date: s.created_at,
-      score: totalScore,
-      maxScore,
-      percentage: Math.round((totalScore / maxScore) * 100),
-    };
-  });
+  const scoreTrend = await Promise.all(
+    completedSessions.map(async (s) => {
+      const sessionQuestions = await store.getQuestionsForSession(s.id);
+      const questionIds = new Set(sessionQuestions.map((q) => q.id));
+      const sessionAttempts = attempts.filter((a) => questionIds.has(a.question_id));
+      const totalScore = sessionAttempts.reduce((acc, a) => acc + a.score, 0);
+      const maxScore = sessionAttempts.reduce((acc, a) => acc + a.max_score, 0) || 10;
+      return {
+        sessionId: s.id,
+        flowTag: s.flow_tag,
+        date: s.created_at,
+        score: totalScore,
+        maxScore,
+        percentage: Math.round((totalScore / maxScore) * 100),
+      };
+    })
+  );
 
   // Misses grouped by flow_tag
   const missesByTag: Record<string, number> = {};
@@ -58,4 +59,3 @@ export async function GET(req: NextRequest) {
     feedbackCount: feedbackList.length,
   });
 }
-

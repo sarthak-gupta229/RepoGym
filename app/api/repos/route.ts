@@ -20,19 +20,18 @@ export async function POST(req: NextRequest) {
 
     const { owner, repo: repoName } = parseRepoUrl(url);
 
-    // Check if repo exists
-    let repo = await store.getRepoByOwnerName(owner, repoName);
-    if (!repo) {
-      repo = await store.saveRepo({
+    // Fetch repository files from GitHub first to verify repo & branch
+    const fetchResult = await fetchRepoFiles(owner, repoName);
+
+    // Save or update repo in persistent store & link to user
+    const repo = await store.saveRepo(
+      {
         owner,
         name: repoName,
-        default_branch: 'main',
-      });
-    }
-
-    // Fetch repository files from GitHub
-    const fetchResult = await fetchRepoFiles(owner, repoName);
-    repo.default_branch = fetchResult.defaultBranch;
+        default_branch: fetchResult.defaultBranch,
+      },
+      user.id
+    );
 
     // Check if analysis already cached for this commit
     let analysis = await store.findAnalysis(repo.id, fetchResult.commitSha);
@@ -50,6 +49,9 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Always record user repository visit so it appears on user's dashboard
+    await store.recordUserRepoVisit(user.id, repo.id);
+
     return NextResponse.json({ repo, analysis });
   } catch (err) {
     if (err instanceof GitHubError) {
@@ -66,20 +68,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const sessions = await store.getUserSessions(user.id);
-  const repos = Array.from(store.repos.values());
-
-  const result = repos.map((r) => {
-    const repoSessions = sessions.filter(async (s) => {
-      const a = await store.getAnalysis(s.analysis_id);
-      return a?.repo_id === r.id;
-    });
-    return {
-      ...r,
-      sessionsCount: repoSessions.length,
-    };
-  });
-
-  return NextResponse.json({ repos: result });
+  const userRepos = await store.getUserRepos(user.id);
+  return NextResponse.json({ repos: userRepos });
 }
-

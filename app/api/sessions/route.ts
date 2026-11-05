@@ -15,21 +15,34 @@ export async function POST(req: NextRequest) {
     await enforceDailySessionLimit(user.id);
 
     const body = await req.json();
-    const { analysisId = 'demo', flowTag, totalQuestions } = body;
+    const { analysisId = 'demo', flowTag, totalQuestions, repoId } = body;
 
-    const analysis = await store.getAnalysis(analysisId);
-    if (!analysis) {
+    let targetAnalysis = await store.getAnalysis(analysisId);
+
+    // If analysisId not found, check if analysisId is actually a repoId or if repoId is provided
+    if (!targetAnalysis) {
+      const targetRepoId = repoId || analysisId;
+      const repoAnalyses = Array.from(store.analyses.values())
+        .filter((a) => a.repo_id === targetRepoId)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      if (repoAnalyses.length > 0) {
+        targetAnalysis = repoAnalyses[0];
+      }
+    }
+
+    if (!targetAnalysis) {
       return NextResponse.json({ error: 'Analysis not found' }, { status: 404 });
     }
 
-    if (!analysis.flows || analysis.flows.length === 0) {
+    if (!targetAnalysis.flows || targetAnalysis.flows.length === 0) {
       return NextResponse.json({ error: 'No request flows found in this repository' }, { status: 400 });
     }
 
     // Pick flow matching flowTag or first flow
     const selectedFlow =
-      (flowTag && analysis.flows.find((f) => f.tag === flowTag || f.id === flowTag)) ||
-      analysis.flows[0];
+      (flowTag && targetAnalysis.flows.find((f) => f.tag === flowTag || f.id === flowTag)) ||
+      targetAnalysis.flows[0];
 
     // Determine total questions (defaults to 5 for increased practice, or respects explicit/test setting)
     const sessionTotalQuestions =
@@ -38,12 +51,12 @@ export async function POST(req: NextRequest) {
         : (process.env.NODE_ENV === 'test' ? 3 : 5);
 
     // Generate question 1
-    const challenge = await generateChallenge(analysis.file_map, selectedFlow);
+    const challenge = await generateChallenge(targetAnalysis.file_map, selectedFlow);
 
-    // Create session with increased question count
+    // Create session
     const session = await store.createSession(
       user.id,
-      analysis.id,
+      targetAnalysis.id,
       selectedFlow.tag,
       sessionTotalQuestions
     );
@@ -51,12 +64,15 @@ export async function POST(req: NextRequest) {
     // Create question 1
     const question = await store.createQuestion({
       session_id: session.id,
-      analysis_id: analysis.id,
+      analysis_id: targetAnalysis.id,
       flow_tag: selectedFlow.tag,
       position: 1,
       question: challenge.question,
       expected_facts: challenge.expectedFacts,
     });
+
+    // Record repo visit for user
+    await store.recordUserRepoVisit(user.id, targetAnalysis.repo_id);
 
     return NextResponse.json({ session, question });
   } catch (err) {
