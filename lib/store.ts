@@ -80,6 +80,37 @@ export interface FeedbackFlag {
   created_at: string;
 }
 
+export interface HackathonCriterionResult {
+  criterion_id: string;
+  criterion_title: string;
+  weight: number;
+  question: string;
+  rubric_points: string[];
+  user_answer: string;
+  score: number; // 0-100
+  weighted_score: number;
+  verdict: 'exceptional' | 'strong' | 'needs_work' | 'weak';
+  strengths: string[];
+  gaps: string[];
+  feedback: string;
+  judge_tips: string;
+  suggested_files?: string[];
+}
+
+export interface HackathonEvaluation {
+  id: string;
+  user_id: string;
+  repo_id: string;
+  analysis_id: string;
+  status: 'in_progress' | 'completed';
+  current_criterion_index: number;
+  total_criteria: number;
+  total_score: number;
+  criterion_results: HackathonCriterionResult[];
+  created_at: string;
+  updated_at: string;
+}
+
 export interface UserRepo {
   id: string;
   user_id: string;
@@ -96,6 +127,14 @@ export interface VisitedRepoItem extends Repo {
     status: 'in_progress' | 'completed' | 'paused';
     current_index: number;
     total_questions: number;
+    created_at: string;
+  } | null;
+  latestHackathonEvaluation?: {
+    id: string;
+    status: 'in_progress' | 'completed';
+    total_score: number;
+    current_criterion_index: number;
+    total_criteria: number;
     created_at: string;
   } | null;
   latestCommitSha?: string | null;
@@ -115,6 +154,7 @@ class PersistentStore {
   attempts = new Map<string, Attempt>();
   feedback = new Map<string, FeedbackFlag>();
   userRepos = new Map<string, UserRepo>();
+  hackathonEvaluations = new Map<string, HackathonEvaluation>();
 
   constructor() {
     this.loadFromDisk();
@@ -220,6 +260,9 @@ class PersistentStore {
       if (Array.isArray(data.userRepos)) {
         for (const ur of data.userRepos) this.userRepos.set(ur.id, ur);
       }
+      if (Array.isArray(data.hackathonEvaluations)) {
+        for (const he of data.hackathonEvaluations) this.hackathonEvaluations.set(he.id, he);
+      }
 
       this.ensureDemoData();
     } catch (err) {
@@ -244,6 +287,7 @@ class PersistentStore {
         attempts: Array.from(this.attempts.values()),
         feedback: Array.from(this.feedback.values()),
         userRepos: Array.from(this.userRepos.values()),
+        hackathonEvaluations: Array.from(this.hackathonEvaluations.values()),
       });
       const tmpFile = `${DB_FILE}.tmp.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2, 7)}`;
       fs.writeFileSync(tmpFile, serialized, 'utf8');
@@ -467,6 +511,12 @@ class PersistentStore {
       const latestAnalysis = repoAnalyses[0] || null;
       const latestSession = repoSessions[0] || null;
 
+      // Latest hackathon evaluation for this repo
+      const repoHackathons = Array.from(this.hackathonEvaluations.values())
+        .filter((h) => h.repo_id === repo.id && h.user_id === userId)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      const latestHackathon = repoHackathons[0] || null;
+
       result.push({
         ...repo,
         last_visited_at: lastVisitedAt,
@@ -478,6 +528,16 @@ class PersistentStore {
               current_index: latestSession.current_index,
               total_questions: latestSession.total_questions,
               created_at: latestSession.created_at,
+            }
+          : null,
+        latestHackathonEvaluation: latestHackathon
+          ? {
+              id: latestHackathon.id,
+              status: latestHackathon.status,
+              total_score: latestHackathon.total_score,
+              current_criterion_index: latestHackathon.current_criterion_index,
+              total_criteria: latestHackathon.total_criteria,
+              created_at: latestHackathon.created_at,
             }
           : null,
         latestCommitSha: latestAnalysis?.commit_sha || null,
@@ -530,6 +590,16 @@ class PersistentStore {
       created_at: newAnalysis.created_at,
     });
     return newAnalysis;
+  }
+
+  async updateAnalysisFlows(id: string, flows: any[]): Promise<Analysis | null> {
+    const analysis = this.analyses.get(id);
+    if (!analysis) return null;
+    analysis.flows = flows;
+    this.analyses.set(id, analysis);
+    this.saveToDisk();
+    await this.syncToSupabase('analyses', { id, flows });
+    return analysis;
   }
 
   // Sessions
@@ -713,8 +783,112 @@ class PersistentStore {
     }
     return null;
   }
+
+  // Hackathon Evaluations
+  async createHackathonEvaluation(data: {
+    userId: string;
+    repoId: string;
+    analysisId: string;
+  }): Promise<HackathonEvaluation> {
+    if (!this.hackathonEvaluations) {
+      this.hackathonEvaluations = new Map();
+    }
+    const id = `heval-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const evalData: HackathonEvaluation = {
+      id,
+      user_id: data.userId,
+      repo_id: data.repoId,
+      analysis_id: data.analysisId,
+      status: 'in_progress',
+      current_criterion_index: 0,
+      total_criteria: 6,
+      total_score: 0,
+      criterion_results: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    this.hackathonEvaluations.set(id, evalData);
+    this.saveToDisk();
+    await this.recordUserRepoVisit(data.userId, data.repoId);
+    this.syncToSupabase('hackathon_evaluations', {
+      id: evalData.id,
+      user_id: evalData.user_id,
+      repo_id: evalData.repo_id,
+      analysis_id: evalData.analysis_id,
+      status: evalData.status,
+      current_criterion_index: evalData.current_criterion_index,
+      total_criteria: evalData.total_criteria,
+      total_score: evalData.total_score,
+      criterion_results: evalData.criterion_results,
+      created_at: evalData.created_at,
+      updated_at: evalData.updated_at,
+    });
+    return evalData;
+  }
+
+  async getHackathonEvaluation(id: string): Promise<HackathonEvaluation | null> {
+    if (!this.hackathonEvaluations) {
+      this.hackathonEvaluations = new Map();
+    }
+    return this.hackathonEvaluations.get(id) || null;
+  }
+
+  async updateHackathonEvaluation(
+    id: string,
+    updates: Partial<HackathonEvaluation>
+  ): Promise<HackathonEvaluation> {
+    if (!this.hackathonEvaluations) {
+      this.hackathonEvaluations = new Map();
+    }
+    const evalItem = this.hackathonEvaluations.get(id);
+    if (!evalItem) throw new Error(`Hackathon evaluation ${id} not found`);
+    const updated: HackathonEvaluation = {
+      ...evalItem,
+      ...updates,
+      updated_at: new Date().toISOString(),
+    };
+    this.hackathonEvaluations.set(id, updated);
+    this.saveToDisk();
+    this.syncToSupabase('hackathon_evaluations', {
+      id: updated.id,
+      user_id: updated.user_id,
+      repo_id: updated.repo_id,
+      analysis_id: updated.analysis_id,
+      status: updated.status,
+      current_criterion_index: updated.current_criterion_index,
+      total_criteria: updated.total_criteria,
+      total_score: updated.total_score,
+      criterion_results: updated.criterion_results,
+      created_at: updated.created_at,
+      updated_at: updated.updated_at,
+    });
+    return updated;
+  }
+
+  async getUserHackathonEvaluations(
+    userId: string,
+    repoId?: string
+  ): Promise<HackathonEvaluation[]> {
+    if (!this.hackathonEvaluations) {
+      this.hackathonEvaluations = new Map();
+    }
+    return Array.from(this.hackathonEvaluations.values())
+      .filter((h) => h.user_id === userId && (!repoId || h.repo_id === repoId))
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }
 }
 
-const globalForStore = globalThis as unknown as { store: PersistentStore };
-export const store = globalForStore.store || new PersistentStore();
-globalForStore.store = store;
+const globalForStore = globalThis as unknown as { store?: PersistentStore };
+
+if (globalForStore.store) {
+  Object.setPrototypeOf(globalForStore.store, PersistentStore.prototype);
+  if (!globalForStore.store.hackathonEvaluations) {
+    globalForStore.store.hackathonEvaluations = new Map();
+  }
+}
+
+if (!globalForStore.store || typeof (globalForStore.store as any).createHackathonEvaluation !== 'function') {
+  globalForStore.store = new PersistentStore();
+}
+
+export const store = globalForStore.store;

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { store } from '@/lib/store';
-import { generateChallenge } from '@/lib/generate';
+import { generateChallenge, generateChallengeFallback } from '@/lib/generate';
+import type { Challenge } from '@/lib/schemas';
+import { detectFlows } from '@/lib/select';
 import { PastResult } from '@/lib/prompt';
 import { getAuthenticatedUser } from '@/lib/auth-helper';
 
@@ -31,6 +33,22 @@ export async function POST(
     return NextResponse.json({ error: 'Analysis not found' }, { status: 404 });
   }
 
+  // Ensure analysis has flows
+  if (!analysis.flows || analysis.flows.length === 0) {
+    analysis.flows = detectFlows(analysis.file_map);
+    if (analysis.flows.length === 0) {
+      analysis.flows = [
+        {
+          id: 'flow-core',
+          label: 'Core Project Architecture',
+          routeFile: Object.keys(analysis.file_map)[0] || 'index.js',
+          tag: 'core',
+        },
+      ];
+    }
+    await store.updateAnalysisFlows(analysis.id, analysis.flows);
+  }
+
   const questions = await store.getQuestionsForSession(session.id);
   const attempts = await store.getAttemptsForSession(session.id);
 
@@ -59,7 +77,13 @@ export async function POST(
       : analysis.flows[(nextPosition - 1) % analysis.flows.length];
 
   try {
-    const challenge = await generateChallenge(analysis.file_map, nextFlow, pastResults);
+    let challenge: Challenge;
+    try {
+      challenge = await generateChallenge(analysis.file_map, nextFlow, pastResults);
+    } catch (llmErr) {
+      console.warn('LLM challenge generation failed on next question; using verified fallback:', llmErr);
+      challenge = generateChallengeFallback(analysis.file_map, nextFlow);
+    }
 
     const question = await store.createQuestion({
       session_id: session.id,

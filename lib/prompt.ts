@@ -140,19 +140,19 @@ Student Answer:
 
 Grading Philosophy & Rules:
 1. "maxScore" should be 10.
-2. "score": Assign an integer between 0 and 10 based on how many expected facts the student adequately addressed.
-   - GRADE LENIENTLY AND GENEROUSLY: The student is learning the repository.
-   - Accept explanations in plain, conversational English.
-   - The student does NOT need to write verbatim code syntax, declare variable types, or quote exact function or variable names.
-   - If they capture the conceptual idea or general intent (e.g. "it finds the user by email" or "it checks password hash with bcrypt" or "returns an error if invalid"), consider that fact COVERED and award credit.
+2. "score": Assign an integer between 0 and 10 strictly reflecting how accurately the student's answer explains the expected facts and answers the question.
+   - EVALUATE STRICTLY BASED ON ACCURACY: If the student gives a wrong answer, contradicts the code, or talks about unrelated things, assign LOW POINTS (0 to 3 out of 10).
+   - Do NOT award points for incorrect explanations, hallucinations, or fabricated behaviors.
+   - Only consider an expected fact "COVERED" if the student's answer accurately captures what actually happens in the code.
+   - If the student's answer is correct, award points proportionally (e.g. all facts covered = 8 to 10 points; partially covered = 4 to 6 points; incorrect or missing = 0 to 3 points).
 3. "verdict": 
-   - "correct" if score >= 7 (the student understood the general flow and primary facts).
-   - "partial" if score is between 4 and 6.
-   - "incorrect" if score <= 3 (only if the answer is completely missing, unrelated, or contradicts the code).
-4. "covered": Array of expected fact IDs (e.g. ["fact_1"]) that the student correctly explained or touched upon conceptually.
-5. "missed": Array of expected fact IDs that the student did not mention or got substantially wrong.
+   - "correct" if score >= 7 (the student genuinely understood the flow and addressed the facts accurately).
+   - "partial" if score is between 4 and 6 (partially correct with notable omissions).
+   - "incorrect" if score <= 3 (if the answer is wrong, missing, unrelated, or contradicts the code).
+4. "covered": Array of expected fact IDs (e.g. ["fact_1"]) that the student genuinely and correctly explained.
+5. "missed": Array of expected fact IDs that the student did not mention, got wrong, or contradicted.
    - Note: Every fact ID in expected facts must appear in either "covered" or "missed".
-6. "feedback": A supportive, constructive 1 to 3 sentence explanation. Always start with an encouraging sentence celebrating what they got right, followed by a friendly clarification of anything they missed.
+6. "feedback": A direct, constructive explanation. Clearly state what was correct and explicitly identify what was wrong or missing.
 7. "citations": Array of objects { "file": string, "startLine": number, "endLine": number } supporting your feedback.
    - Must cite existing files and valid line numbers from the code below.
 8. "followUpQuestion": If verdict is "partial" or "incorrect", ask a simple, friendly hint or follow-up question prompting the student to think about one of the missed facts. If verdict is "correct", return null.

@@ -50,6 +50,104 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // 1. Detailed Hackathon Evaluations with complete marks, questions, answers, and corrections
+  const rawHackathons = await store.getUserHackathonEvaluations(user.id);
+  const hackathonEvaluations = await Promise.all(
+    rawHackathons.map(async (h) => {
+      const repo = await store.getRepo(h.repo_id);
+      return {
+        id: h.id,
+        repoId: h.repo_id,
+        repoName: repo ? `${repo.owner}/${repo.name}` : (h.repo_id === 'repo-demo' ? 'demo/login-service' : 'Unknown Project'),
+        analysisId: h.analysis_id,
+        status: h.status,
+        totalScore: h.total_score,
+        totalCriteria: h.total_criteria,
+        currentCriterionIndex: h.current_criterion_index,
+        resultsCount: h.criterion_results?.length || 0,
+        createdAt: h.created_at,
+        updatedAt: h.updated_at,
+        criterionResults: h.criterion_results || [],
+      };
+    })
+  );
+
+  // 2. Detailed Project Comprehension Sessions with full attempts, scores, and code citations
+  const projectSessions = await Promise.all(
+    sessions.map(async (s) => {
+      const analysis = await store.getAnalysis(s.analysis_id);
+      const repo = analysis ? await store.getRepo(analysis.repo_id) : null;
+      const repoName = repo ? `${repo.owner}/${repo.name}` : 'demo/login-service';
+      const sessionQuestions = await store.getQuestionsForSession(s.id);
+      const questionIds = new Set(sessionQuestions.map((q) => q.id));
+      const sessionAttempts = attempts.filter((a) => questionIds.has(a.question_id));
+
+      const totalScore = Math.round(sessionAttempts.reduce((acc, a) => acc + a.score, 0) * 10) / 10;
+      const maxScore = sessionAttempts.reduce((acc, a) => acc + a.max_score, 0) || (s.total_questions * 10);
+      const percentage = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
+
+      const detailedQuestions = sessionQuestions.map((q) => {
+        const attempt = sessionAttempts.find((a) => a.question_id === q.id) || null;
+        return {
+          id: q.id,
+          position: q.position,
+          question: q.question,
+          expectedFacts: q.expected_facts || [],
+          attempt: attempt
+            ? {
+                id: attempt.id,
+                answer: attempt.answer,
+                score: attempt.score,
+                maxScore: attempt.max_score,
+                verdict: attempt.verdict,
+                covered: attempt.covered || [],
+                missed: attempt.missed || [],
+                feedback: attempt.feedback,
+                citations: attempt.citations || [],
+                followUpQuestion: attempt.follow_up_question,
+                createdAt: attempt.created_at,
+              }
+            : null,
+        };
+      });
+
+      return {
+        id: s.id,
+        repoId: repo?.id || 'repo-demo',
+        repoName,
+        flowTag: s.flow_tag,
+        status: s.status,
+        totalQuestions: s.total_questions,
+        currentIndex: s.current_index,
+        score: totalScore,
+        maxScore,
+        percentage,
+        createdAt: s.created_at,
+        updatedAt: s.updated_at,
+        questions: detailedQuestions,
+        answeredCount: sessionAttempts.length,
+      };
+    })
+  );
+
+  // Compute summary stats
+  const completedHackathons = hackathonEvaluations.filter((h) => h.status === 'completed');
+  const completedProjectList = projectSessions.filter((p) => p.status === 'completed');
+
+  const avgHackathonScore =
+    completedHackathons.length > 0
+      ? Math.round(
+          (completedHackathons.reduce((acc, h) => acc + h.totalScore, 0) / completedHackathons.length) * 10
+        ) / 10
+      : 0;
+
+  const avgProjectScore =
+    completedProjectList.length > 0
+      ? Math.round(
+          completedProjectList.reduce((acc, p) => acc + p.percentage, 0) / completedProjectList.length
+        )
+      : 0;
+
   return NextResponse.json({
     sessionsCount: sessions.length,
     completedSessionsCount: completedSessions.length,
@@ -57,5 +155,13 @@ export async function GET(req: NextRequest) {
     missesByTag,
     suggestedFocus: mostMissedTopic,
     feedbackCount: feedbackList.length,
+    hackathonEvaluations,
+    projectSessions,
+    summaryStats: {
+      totalCompletedHackathons: completedHackathons.length,
+      totalCompletedProjectSessions: completedProjectList.length,
+      avgHackathonScore,
+      avgProjectScore,
+    },
   });
 }

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { ThemeToggle } from './ThemeToggle';
 
 interface UserInfo {
   id: string;
@@ -90,6 +91,7 @@ export function NavbarAuth() {
 
     return (
       <div className="flex items-center gap-2 font-mono text-[10px] uppercase">
+        <ThemeToggle />
         <Link
           href="/dashboard"
           className="flex items-center gap-1.5 px-2.5 py-1 bg-[#171717] border border-[#262626] hover:border-[#333333] transition-colors text-[#EDEDED]"
@@ -110,6 +112,7 @@ export function NavbarAuth() {
 
   return (
     <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider">
+      <ThemeToggle />
       <Link
         href="/signin"
         className="px-2.5 py-1 bg-transparent border border-[#333333] text-[#A1A1A1] hover:text-[#EDEDED] hover:border-[#EDEDED] transition-colors"

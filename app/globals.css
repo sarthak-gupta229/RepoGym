@@ -21,14 +21,32 @@
   --foreground: #ededed;
 }
 
+html.light {
+  --theme-page: #f8f9fa;
+  --theme-cell: #ffffff;
+  --theme-cell-hover: #f1f3f5;
+  --theme-muted: #4b5563;
+  --theme-text: #111827;
+  --theme-border: #e5e7eb;
+  --theme-border-subtle: #d1d5db;
+  --theme-border-strong: #111827;
+  --theme-scrollbar: #9ca3af;
+  --theme-amber: #b45309;
+  --theme-rose: #b91c1c;
+  --theme-cream: #78350f;
+
+  --background: #f8f9fa;
+  --foreground: #111827;
+}
+
 @theme inline {
-  --color-page: #000000;
-  --color-cell: #171717;
-  --color-cell-hover: #1f1f1f;
-  --color-muted: #a1a1a1;
-  --color-text: #ededed;
-  --color-border-primary: #262626;
-  --color-border-secondary: #333333;
+  --color-page: var(--theme-page);
+  --color-cell: var(--theme-cell);
+  --color-cell-hover: var(--theme-cell-hover);
+  --color-muted: var(--theme-muted);
+  --color-text: var(--theme-text);
+  --color-border-primary: var(--theme-border);
+  --color-border-secondary: var(--theme-border-subtle);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
 }
@@ -39,13 +57,17 @@
 
 html,
 body {
-  background-color: #000000 !important;
-  color: #ededed !important;
   font-family: var(--font-sans);
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html.dark,
+html.dark body {
+  background-color: #000000 !important;
+  color: #ededed !important;
 }
 
 /* Custom technical scrollbar */
@@ -120,8 +142,242 @@ body {
   text-transform: uppercase !important;
 }
 
-/* Subtle selection styling */
+/* Selection styling */
 ::selection {
   background-color: #ededed;
   color: #000000;
+}
+
+/* ======================================================== */
+/* LIGHT THEME SYSTEM OVERRIDES */
+/* ======================================================== */
+html.light,
+html.light body {
+  background-color: #f8f9fa !important;
+  color: #111827 !important;
+}
+
+html.light {
+  color-scheme: light;
+}
+
+/* Page canvas and container backgrounds */
+html.light .bg-\[\#000000\],
+html.light .bg-black {
+  background-color: #f8f9fa !important;
+}
+
+html.light .bg-\[\#0d0d0d\],
+html.light .bg-\[\#121212\],
+html.light .bg-\[\#171717\],
+html.light .bg-\[\#1a1a1a\],
+html.light .bg-\[\#1c1c1c\] {
+  background-color: #ffffff !important;
+}
+
+html.light .bg-\[\#1f1f1f\],
+html.light .bg-\[\#262626\] {
+  background-color: #f3f4f6 !important;
+}
+
+html.light .hover\:bg-\[\#1a1a1a\]:hover,
+html.light .hover\:bg-\[\#1c1c1c\]:hover,
+html.light .hover\:bg-\[\#1f1f1f\]:hover,
+html.light .hover\:bg-\[\#222222\]:hover {
+  background-color: #f1f3f5 !important;
+}
+
+/* Border overrides */
+html.light .border-\[\#262626\],
+html.light .border-\[\#333333\],
+html.light .border-\[\#222222\],
+html.light .border-\[\#1f1f1f\],
+html.light .border-\[\#141414\] {
+  border-color: #e5e7eb !important;
+}
+
+html.light .divide-\[\#262626\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #e5e7eb !important;
+}
+
+/* Typography & text color overrides */
+html.light .text-\[\#EDEDED\],
+html.light .text-white {
+  color: #111827 !important;
+}
+
+html.light .text-\[\#A1A1A1\],
+html.light .text-\[\#888888\] {
+  color: #4b5563 !important;
+}
+
+html.light .text-\[\#555555\],
+html.light .text-\[\#777777\] {
+  color: #6b7280 !important;
+}
+
+html.light .text-\[\#333333\] {
+  color: #d1d5db !important;
+}
+
+html.light .hover\:text-\[\#EDEDED\]:hover,
+html.light .hover\:text-white:hover {
+  color: #111827 !important;
+}
+
+html.light .hover\:border-\[\#EDEDED\]:hover {
+  border-color: #111827 !important;
+}
+
+/* Primary High-Contrast Dark Action Buttons on Light Theme */
+html.light .bg-\[\#EDEDED\].text-\[\#000000\],
+html.light .bg-\[\#EDEDED\].text-black {
+  background-color: #111827 !important;
+  color: #ffffff !important;
+  border-color: #111827 !important;
+}
+
+html.light .bg-\[\#EDEDED\].text-\[\#000000\]:hover,
+html.light .bg-\[\#EDEDED\].text-black:hover {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+}
+
+/* Theme Accents: Amber / Hackathon */
+html.light .bg-\[\#1a150e\] {
+  background-color: #fffbeb !important;
+  border-color: #fde68a !important;
+}
+
+html.light .text-\[\#E6A360\] {
+  color: #b45309 !important;
+}
+
+html.light .border-\[\#E6A360\],
+html.light .border-\[\#E6A360\]\/40,
+html.light .border-\[\#E6A360\]\/30 {
+  border-color: #d97706 !important;
+}
+
+html.light .text-\[\#FFF0D1\] {
+  color: #78350f !important;
+}
+
+/* Theme Accents: Green / Success */
+html.light .bg-\[\#0c1f13\] {
+  background-color: #f0fdf4 !important;
+  border-color: #bbf7d0 !important;
+}
+
+html.light .text-\[\#4EBA6F\] {
+  color: #15803d !important;
+}
+
+html.light .border-\[\#4EBA6F\],
+html.light .border-\[\#4EBA6F\]\/30,
+html.light .border-\[\#4EBA6F\]\/40 {
+  border-color: #22c55e !important;
+}
+
+/* Theme Accents: Red / Error / Gaps */
+html.light .bg-\[\#220d0d\] {
+  background-color: #fef2f2 !important;
+  border-color: #fecaca !important;
+}
+
+html.light .text-\[\#DC8381\] {
+  color: #b91c1c !important;
+}
+
+html.light .border-\[\#DC8381\],
+html.light .border-\[\#DC8381\]\/30,
+html.light .border-\[\#DC8381\]\/40 {
+  border-color: #ef4444 !important;
+}
+
+/* Theme Accents: Yellow / Warning */
+html.light .bg-\[\#1c1809\] {
+  background-color: #fefce8 !important;
+  border-color: #fef08a !important;
+}
+
+html.light .text-\[\#E5B54F\] {
+  color: #a16207 !important;
+}
+
+html.light .border-\[\#E5B54F\] {
+  border-color: #eab308 !important;
+}
+
+/* Form Controls & Inputs */
+html.light textarea,
+html.light input[type="text"],
+html.light input[type="email"],
+html.light input[type="password"] {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #d1d5db !important;
+}
+
+html.light textarea:focus,
+html.light input:focus {
+  border-color: #111827 !important;
+  outline: none !important;
+}
+
+/* Sticky Headers & Navigation */
+html.light header {
+  background-color: #ffffff !important;
+  border-color: #e5e7eb !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* Selection */
+html.light ::selection {
+  background-color: #111827 !important;
+  color: #ffffff !important;
+}
+
+/* Scrollbar in Light Theme */
+html.light ::-webkit-scrollbar-track {
+  background: #f8f9fa;
+}
+html.light ::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+}
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* React Flow in Light Theme */
+html.light .react-flow,
+html.light .react-flow__background {
+  background-color: #f8f9fa !important;
+}
+
+html.light .react-flow__controls {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+html.light .react-flow__controls-button {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  color: #4b5563 !important;
+  fill: #4b5563 !important;
+}
+
+html.light .react-flow__controls-button:hover {
+  background-color: #f3f4f6 !important;
+  color: #111827 !important;
+  fill: #111827 !important;
+}
+
+html.light .react-flow__minimap {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+html.light .react-flow__minimap-mask {
+  fill: rgba(240, 240, 240, 0.7) !important;
 }

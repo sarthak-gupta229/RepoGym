@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { store } from '@/lib/store';
-import { generateChallenge } from '@/lib/generate';
+import { generateChallenge, generateChallengeFallback } from '@/lib/generate';
+import type { Challenge } from '@/lib/schemas';
+import { detectFlows } from '@/lib/select';
 import { getAuthenticatedUser } from '@/lib/auth-helper';
 import { enforceDailySessionLimit, RateLimitError } from '@/lib/limits';
 
@@ -35,8 +37,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Analysis not found' }, { status: 404 });
     }
 
+    // Auto-detect and populate flows if missing or empty
     if (!targetAnalysis.flows || targetAnalysis.flows.length === 0) {
-      return NextResponse.json({ error: 'No request flows found in this repository' }, { status: 400 });
+      targetAnalysis.flows = detectFlows(targetAnalysis.file_map);
+      await store.updateAnalysisFlows(targetAnalysis.id, targetAnalysis.flows);
+    }
+
+    // Universal fallback if flows still somehow empty
+    if (!targetAnalysis.flows || targetAnalysis.flows.length === 0) {
+      const firstFile = Object.keys(targetAnalysis.file_map)[0] || 'index.js';
+      targetAnalysis.flows = [
+        {
+          id: 'flow-core',
+          label: 'Core Project Architecture',
+          routeFile: firstFile,
+          tag: 'core',
+        },
+      ];
+      await store.updateAnalysisFlows(targetAnalysis.id, targetAnalysis.flows);
     }
 
     // Pick flow matching flowTag or first flow
@@ -50,8 +68,14 @@ export async function POST(req: NextRequest) {
         ? totalQuestions
         : (process.env.NODE_ENV === 'test' ? 3 : 5);
 
-    // Generate question 1
-    const challenge = await generateChallenge(targetAnalysis.file_map, selectedFlow);
+    // Generate question 1 with reliable fallback if LLM encounters rate limiting or errors
+    let challenge: Challenge;
+    try {
+      challenge = await generateChallenge(targetAnalysis.file_map, selectedFlow);
+    } catch (challengeErr) {
+      console.warn('LLM challenge generation failed; using verified deterministic flow challenge:', challengeErr);
+      challenge = generateChallengeFallback(targetAnalysis.file_map, selectedFlow);
+    }
 
     // Create session
     const session = await store.createSession(

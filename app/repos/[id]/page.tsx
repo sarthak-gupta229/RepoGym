@@ -189,6 +189,24 @@ function RepoPageContent() {
     }
   };
 
+  const handleStartHackathon = async () => {
+    try {
+      const res = await fetch('/api/hackathon/evaluations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          analysisId: analysisId,
+          repoId: repoInfo?.id || repoId,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to start hackathon evaluation');
+      router.push(`/hackathon/${data.evaluation.id}`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to start hackathon evaluation');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#000000] text-[10px] font-mono uppercase tracking-wider text-[#A1A1A1]">
@@ -246,6 +264,14 @@ function RepoPageContent() {
           </button>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleStartHackathon}
+              className="px-3 py-1.5 bg-[#1a150e] text-[#E6A360] border border-[#E6A360] hover:bg-[#E6A360] hover:text-[#000000] font-bold transition-all duration-140 cursor-pointer whitespace-nowrap flex items-center gap-1"
+            >
+              <span>⚡</span>
+              <span>Hackathon Eval</span>
+            </button>
+
             <select
               value={questionCount}
               onChange={(e) => setQuestionCount(Number(e.target.value))}
@@ -262,7 +288,7 @@ function RepoPageContent() {
               onClick={handleStartSession}
               className="px-4 py-1.5 bg-[#EDEDED] text-[#000000] border border-[#EDEDED] hover:bg-white font-semibold transition-all duration-140 cursor-pointer whitespace-nowrap"
             >
-              Start Quiz Session &rarr;
+              Start Flow Session &rarr;
             </button>
           </div>
 

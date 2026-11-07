@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { VoiceInputButton } from '@/components/VoiceInputButton';
+import { SpeakerButton } from '@/components/SpeakerButton';
 
 interface QuestionPanelProps {
   questionNumber: number;
@@ -65,9 +67,12 @@ export function QuestionPanel({
       </div>
 
       {/* Question Prompt */}
-      <h2 className="text-base font-bold text-[#EDEDED] uppercase tracking-tight leading-snug">
-        {questionText}
-      </h2>
+      <div className="flex items-start justify-between gap-3">
+        <h2 className="text-base font-bold text-[#EDEDED] uppercase tracking-tight leading-snug flex-1">
+          {questionText}
+        </h2>
+        <SpeakerButton text={questionText} className="shrink-0 pt-0.5" />
+      </div>
 
       {/* Expandable Hint Box */}
       {showHint && (
@@ -119,15 +124,28 @@ export function QuestionPanel({
           </button>
         </div>
 
-        <textarea
-          value={answer}
-          onChange={(e) => setAnswer(e.target.value)}
-          placeholder="Explain in simple sequential steps: 1) It checks if user exists... 2) It verifies credentials... 3) It responds with..."
-          rows={5}
-          maxLength={2000}
-          disabled={isLoading}
-          className="w-full text-xs p-3 bg-[#000000] border border-[#333333] text-[#EDEDED] placeholder-[#555555] focus:outline-none focus:border-[#EDEDED] font-mono resize-y transition-colors disabled:opacity-50"
-        />
+        <div className="relative">
+          <textarea
+            value={answer}
+            onChange={(e) => setAnswer(e.target.value)}
+            placeholder="Explain in simple sequential steps: 1) It checks if user exists... 2) It verifies credentials... 3) It responds with..."
+            rows={5}
+            maxLength={2000}
+            disabled={isLoading}
+            className="w-full text-xs p-3 pr-36 pb-14 bg-[#000000] border border-[#333333] text-[#EDEDED] placeholder-[#555555] focus:outline-none focus:border-[#EDEDED] font-mono resize-y transition-colors disabled:opacity-50"
+          />
+
+          {/* Embedded mic button inside the bottom-right corner of the input box */}
+          <div className="absolute right-3 bottom-3 z-10 flex items-center gap-2">
+            <VoiceInputButton
+              variant="inside-input"
+              onTranscript={(spokenText) =>
+                setAnswer((prev) => (prev.trim() ? `${prev.trim()} ${spokenText}` : spokenText))
+              }
+              disabled={isLoading}
+            />
+          </div>
+        </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-wider text-[#555555]">
           <div>
