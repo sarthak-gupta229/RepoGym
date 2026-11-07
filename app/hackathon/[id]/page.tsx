@@ -11,6 +11,112 @@ import { HACKATHON_CRITERIA, HackathonCriterion } from '@/lib/hackathon';
 import { HackathonQuestion } from '@/lib/schemas';
 import { HackathonEvaluation, HackathonCriterionResult } from '@/lib/store';
 
+const DEFENSE_DURATION_MS = 10 * 60 * 1000;
+
+type DefenseClock = { remainingMs: number; endsAt: number | null };
+
+const INITIAL_DEFENSE_CLOCK: DefenseClock = { remainingMs: DEFENSE_DURATION_MS, endsAt: null };
+
+function remainingDefenseTime(endsAt: number) {
+  return Math.max(0, Math.min(DEFENSE_DURATION_MS, endsAt - Date.now()));
+}
+
+function restoreDefenseClock(storageKey: string): DefenseClock {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(storageKey) ?? 'null') as Partial<DefenseClock> | null;
+    if (typeof saved?.endsAt === 'number' && Number.isSafeInteger(saved.endsAt)) {
+      const remainingMs = remainingDefenseTime(saved.endsAt);
+      return { remainingMs, endsAt: remainingMs > 0 ? saved.endsAt : null };
+    }
+    if (saved?.endsAt === null && typeof saved.remainingMs === 'number'
+      && Number.isSafeInteger(saved.remainingMs) && saved.remainingMs >= 0
+      && saved.remainingMs <= DEFENSE_DURATION_MS) {
+      return { remainingMs: saved.remainingMs, endsAt: null };
+    }
+  } catch {
+    // A blocked storage API or invalid saved value should not prevent practice.
+  }
+  return INITIAL_DEFENSE_CLOCK;
+}
+
+function DefenseTimer({ evaluationId }: { evaluationId: string }) {
+  const storageKey = `repogym_defense_timer:${evaluationId}`;
+  const [{ remainingMs, endsAt }, setClock] = useState(() => restoreDefenseClock(storageKey));
+
+  useEffect(() => {
+    if (endsAt === null) return;
+
+    const interval = window.setInterval(() => {
+      const remainingMs = remainingDefenseTime(endsAt);
+      setClock((current) => current.endsAt === endsAt
+        ? { remainingMs, endsAt: remainingMs > 0 ? endsAt : null }
+        : current);
+    }, 200);
+
+    return () => window.clearInterval(interval);
+  }, [endsAt]);
+
+  const secondsLeft = Math.ceil(remainingMs / 1000);
+  const minutes = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+  const seconds = String(secondsLeft % 60).padStart(2, '0');
+  const isRunning = endsAt !== null;
+  const isExpired = remainingMs === 0;
+  const buttonLabel = isRunning ? 'Pause timer' : remainingMs === DEFENSE_DURATION_MS ? 'Start timer' : 'Resume timer';
+  const warning = isExpired ? 'Time is up'
+    : remainingMs <= 30_000 ? '30 seconds or less'
+    : remainingMs <= 120_000 ? '2 minutes or less'
+    : '';
+  const buttonClass = 'cursor-pointer border border-border-secondary px-3 py-1.5 text-xs font-semibold text-text hover:bg-cell-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--theme-amber)]';
+
+  const saveClock = (nextClock: DefenseClock) => {
+    setClock(nextClock);
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(nextClock));
+    } catch {
+      // The timer still works in memory if storage is unavailable.
+    }
+  };
+
+  const toggleTimer = () => {
+    if (endsAt !== null) {
+      saveClock({ remainingMs: remainingDefenseTime(endsAt), endsAt: null });
+    } else {
+      saveClock({ remainingMs, endsAt: Date.now() + remainingMs });
+    }
+  };
+
+  const resetTimer = () => {
+    if (endsAt !== null && remainingDefenseTime(endsAt) > 0
+      && !window.confirm('Reset the defense timer to 10:00?')) return;
+
+    saveClock(INITIAL_DEFENSE_CLOCK);
+  };
+
+  return (
+    <div className="flex w-full flex-wrap items-center justify-between gap-2 border border-border-primary bg-cell px-3 py-2 font-mono sm:px-4">
+      <div className="flex items-center gap-3">
+        <span className="text-xs text-muted">Defense timer</span>
+        <span role="timer" aria-label="Time remaining" className="text-sm font-bold tabular-nums text-text">
+          {minutes}:{seconds}
+        </span>
+      </div>
+      <span role="status" className={`text-xs font-bold ${isExpired ? 'text-[var(--theme-rose)]' : 'text-[var(--theme-amber)]'}`}>
+        {warning}
+      </span>
+      <div className="flex items-center gap-2">
+        {!isExpired && (
+          <button type="button" onClick={toggleTimer} className={buttonClass}>
+            {buttonLabel}
+          </button>
+        )}
+        <button type="button" onClick={resetTimer} className={buttonClass}>
+          Reset timer
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function HackathonPageContent() {
   const params = useParams();
   const router = useRouter();
@@ -165,8 +271,8 @@ function HackathonPageContent() {
   return (
     <div className="min-h-screen flex flex-col bg-[#000000] text-[#EDEDED]">
       {/* Top Header */}
-      <header className="border-b border-[#262626] bg-[#000000] px-6 py-3 flex items-center justify-between sticky top-0 z-30">
-        <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-2 border-b border-[#262626] bg-[#000000] px-3 py-3 sm:px-6">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
           <Link href="/" className="flex items-center gap-2 group">
             <span className="px-1.5 py-0.5 bg-[#EDEDED] text-[#000000] font-mono font-bold text-xs">
               RG
@@ -180,12 +286,12 @@ function HackathonPageContent() {
             Hackathon Jury Mode
           </span>
           <span className="text-[#333333]">/</span>
-          <span className="font-mono text-xs text-[#EDEDED] font-semibold">
+          <span className="break-all font-mono text-xs text-[#EDEDED] font-semibold">
             {repoTitle}
           </span>
         </div>
 
-        <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-wider">
+        <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] uppercase tracking-wider sm:gap-3">
           <div className="px-3 py-1 bg-[#171717] border border-[#262626] text-[#A1A1A1]">
             Live Score:{' '}
             <span className="text-[#EDEDED] font-bold">
@@ -214,6 +320,8 @@ function HackathonPageContent() {
           </Link>
           <NavbarAuth />
         </div>
+
+        {!isCompleted && <DefenseTimer key={evaluation.id} evaluationId={evaluation.id} />}
       </header>
 
       {/* Criteria Progress Tracker Bar */}
