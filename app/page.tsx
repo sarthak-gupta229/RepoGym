@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { NavbarAuth } from '@/components/NavbarAuth';
+import { Tutorial } from '@/components/Tutorial';
 
 interface VisitedRepo {
   id: string;
@@ -87,7 +88,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col bg-[#000000] text-[#EDEDED]">
       {/* Editorial Top Navigation Header */}
-      <header className="border-b border-[#262626] bg-[#000000] px-6 py-3 flex items-center justify-between sticky top-0 z-30">
+      <header className="border-b border-[#262626] bg-[#000000] px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2 sticky top-0 z-30">
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2 group">
             <span className="px-1.5 py-0.5 bg-[#EDEDED] text-[#000000] font-mono font-bold text-xs">
@@ -103,7 +104,8 @@ export default function HomePage() {
           </span>
         </div>
 
-        <nav className="flex items-center gap-3 font-mono text-[10px] uppercase">
+        <nav className="flex flex-wrap items-center gap-2 sm:gap-3 font-mono text-[10px] uppercase">
+          <Tutorial chapter="home" />
           <Link
             href="/dashboard"
             className="px-2.5 py-1 text-[#A1A1A1] hover:text-[#EDEDED] transition-colors hidden sm:inline-block tracking-wider"
@@ -130,7 +132,7 @@ export default function HomePage() {
         </div>
 
         {/* Hero Headline */}
-        <div className="flex flex-col gap-4 max-w-3xl">
+        <div data-tour="welcome" className="flex flex-col gap-4 max-w-3xl">
           <h1 className="text-4xl sm:text-6xl font-bold uppercase tracking-tight text-[#EDEDED] leading-[1.05]">
             Stop generating code you can&apos;t explain.
           </h1>
@@ -146,7 +148,7 @@ export default function HomePage() {
             <span className="text-[#555555]">github.com/owner/repo</span>
           </div>
 
-          <form onSubmit={handleAnalyze} className="flex flex-col gap-3">
+          <form data-tour="analyze" onSubmit={handleAnalyze} className="flex flex-col gap-3">
             <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
@@ -191,7 +193,7 @@ export default function HomePage() {
 
           {/* Previously Visited Repositories in User's Database */}
           {recentRepos.length > 0 && (
-            <div className="mt-4 pt-3 border-t border-[#262626]">
+            <div data-tour="recent" className="mt-4 pt-3 border-t border-[#262626]">
               <div className="flex items-center justify-between text-[10px] font-mono text-[#A1A1A1] uppercase tracking-wider mb-2">
                 <span>Stored Repositories In Your Database:</span>
                 <Link href="/dashboard" className="text-[#EDEDED] hover:underline">
@@ -216,7 +218,7 @@ export default function HomePage() {
           )}
 
           {/* Sample repo quick link */}
-          <div className="mt-4 pt-3 border-t border-[#262626] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 font-mono text-[10px] text-[#A1A1A1] uppercase tracking-wider">
+          <div data-tour="demo" className="mt-4 pt-3 border-t border-[#262626] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 font-mono text-[10px] text-[#A1A1A1] uppercase tracking-wider">
             <span>Or test with a pre-indexed fixture:</span>
             <Link
               href="/repos/demo"

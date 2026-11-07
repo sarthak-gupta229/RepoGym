@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { DependencyGraph } from '@/components/DependencyGraph';
 import { FileViewer } from '@/components/FileViewer';
 import { NavbarAuth } from '@/components/NavbarAuth';
+import { Tutorial } from '@/components/Tutorial';
 import { FileTree } from '@/components/FileTree';
 import { buildGraph, DependencyGraph as GraphData } from '@/lib/graph';
 import loginFixture from '@/tests/fixtures/login.json';
@@ -220,7 +221,7 @@ function RepoPageContent() {
   return (
     <div className="min-h-screen flex flex-col bg-[#000000] text-[#EDEDED]">
       {/* Top Navbar */}
-      <header className="border-b border-[#262626] bg-[#000000] px-6 py-3 flex items-center justify-between sticky top-0 z-30">
+      <header className="border-b border-[#262626] bg-[#000000] px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2 sticky top-0 z-30">
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2 group">
             <span className="px-1.5 py-0.5 bg-[#EDEDED] text-[#000000] font-mono font-bold text-xs">
@@ -240,8 +241,9 @@ function RepoPageContent() {
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-wider">
+        <div className="flex flex-wrap items-center gap-2.5 font-mono text-[10px] uppercase tracking-wider">
           <button
+            data-tour="repo-highlight"
             onClick={toggleHighlight}
             className={`px-3 py-1.5 border transition-colors cursor-pointer ${
               highlightFiles.length > 0
@@ -253,6 +255,7 @@ function RepoPageContent() {
           </button>
 
           <button
+            data-tour="repo-filter"
             onClick={() => setShowFlowOnly(!showFlowOnly)}
             className={`px-3 py-1.5 border transition-colors cursor-pointer ${
               showFlowOnly
@@ -263,8 +266,9 @@ function RepoPageContent() {
             {showFlowOnly ? 'FLOW ONLY' : `ALL FILES (${allFilePaths.length})`}
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
+              data-tour="repo-defense"
               onClick={handleStartHackathon}
               className="px-3 py-1.5 bg-[#1a150e] text-[#E6A360] border border-[#E6A360] hover:bg-[#E6A360] hover:text-[#000000] font-bold transition-all duration-140 cursor-pointer whitespace-nowrap flex items-center gap-1"
             >
@@ -272,27 +276,30 @@ function RepoPageContent() {
               <span>Hackathon Eval</span>
             </button>
 
-            <select
-              value={questionCount}
-              onChange={(e) => setQuestionCount(Number(e.target.value))}
-              className="px-2.5 py-1.5 bg-[#000000] border border-[#333333] text-[#EDEDED] font-mono text-[10px] uppercase focus:outline-none focus:border-[#EDEDED] cursor-pointer"
-              title="Number of questions in session"
-            >
-              <option value={5}>5 Questions (Standard)</option>
-              <option value={7}>7 Questions</option>
-              <option value={10}>10 Questions</option>
-              <option value={3}>3 Questions</option>
-            </select>
+            <div data-tour="repo-practice" className="flex flex-wrap items-center gap-2">
+              <select
+                value={questionCount}
+                onChange={(e) => setQuestionCount(Number(e.target.value))}
+                className="px-2.5 py-1.5 bg-[#000000] border border-[#333333] text-[#EDEDED] font-mono text-[10px] uppercase focus:outline-none focus:border-[#EDEDED] cursor-pointer"
+                title="Number of questions in session"
+              >
+                <option value={5}>5 Questions (Standard)</option>
+                <option value={7}>7 Questions</option>
+                <option value={10}>10 Questions</option>
+                <option value={3}>3 Questions</option>
+              </select>
 
-            <button
-              onClick={handleStartSession}
-              className="px-4 py-1.5 bg-[#EDEDED] text-[#000000] border border-[#EDEDED] hover:bg-white font-semibold transition-all duration-140 cursor-pointer whitespace-nowrap"
-            >
-              Start Flow Session &rarr;
-            </button>
+              <button
+                onClick={handleStartSession}
+                className="px-4 py-1.5 bg-[#EDEDED] text-[#000000] border border-[#EDEDED] hover:bg-white font-semibold transition-all duration-140 cursor-pointer whitespace-nowrap"
+              >
+                Start Flow Session &rarr;
+              </button>
+            </div>
           </div>
 
           <div className="h-4 w-px bg-[#262626] mx-1" />
+          <Tutorial chapter="repo" />
           <NavbarAuth />
         </div>
       </header>
@@ -302,7 +309,7 @@ function RepoPageContent() {
         {/* Left Column: File Explorer & Connection Inspector (4 cols) */}
         <div className="lg:col-span-4 flex flex-col h-full bg-[#171717] border border-[#262626] p-3 overflow-hidden">
           {/* Tabs */}
-          <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#262626]">
+          <div data-tour="repo-files" className="flex items-center justify-between pb-2 mb-2 border-b border-[#262626]">
             <div className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider">
               <button
                 onClick={() => setActiveTab('graph')}
@@ -315,6 +322,7 @@ function RepoPageContent() {
                 Files ({allFilePaths.length})
               </button>
               <button
+                data-tour="repo-connections"
                 onClick={() => setActiveTab('connections')}
                 className={`px-2.5 py-1 transition-colors cursor-pointer border ${
                   activeTab === 'connections'
@@ -479,7 +487,7 @@ function RepoPageContent() {
         {/* Center/Right Column: Interactive Graph & Code Viewer (8 cols) */}
         <div className="lg:col-span-8 flex flex-col h-full gap-3">
           {/* Top Half: Graph */}
-          <div className="h-3/5 bg-[#171717] border border-[#262626] p-3 flex flex-col relative">
+          <div data-tour="repo-graph" className="h-3/5 bg-[#171717] border border-[#262626] p-3 flex flex-col relative">
             <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#262626] text-xs font-mono">
               <div className="flex items-center gap-2">
                 <span className="font-semibold uppercase tracking-wider text-[#EDEDED] text-[10px]">
@@ -533,7 +541,7 @@ function RepoPageContent() {
           </div>
 
           {/* Bottom Half: Source Code Viewer */}
-          <div className="h-2/5 min-h-0">
+          <div data-tour="repo-source" className="h-2/5 min-h-0">
             {selectedFile && files[selectedFile] ? (
               <FileViewer
                 filePath={selectedFile}

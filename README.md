@@ -59,6 +59,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 - **Interactive Graph & Explorer**: [http://localhost:3000/repos/demo](http://localhost:3000/repos/demo)
 - **Dashboard**: [http://localhost:3000/dashboard](http://localhost:3000/dashboard)
 
+Select **Take a tour** on the home page to learn the basics and open the guided Express login demo. Use **Tutorial** on the repository, session, hackathon, dashboard, or sign-in screen to replay that chapter. The session and hackathon chapters show different tips after grading and on the final scorecard.
+
 ---
 
 ## 🧪 Testing

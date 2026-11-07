@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { NavbarAuth } from '@/components/NavbarAuth';
+import { Tutorial } from '@/components/Tutorial';
 import { FileViewer } from '@/components/FileViewer';
 import { VoiceInputButton } from '@/components/VoiceInputButton';
 import { SpeakerButton } from '@/components/SpeakerButton';
@@ -93,7 +94,7 @@ function DefenseTimer({ evaluationId }: { evaluationId: string }) {
   };
 
   return (
-    <div className="flex w-full flex-wrap items-center justify-between gap-2 border border-border-primary bg-cell px-3 py-2 font-mono sm:px-4">
+    <div data-tour="defense-timer" className="flex w-full flex-wrap items-center justify-between gap-2 border border-border-primary bg-cell px-3 py-2 font-mono sm:px-4">
       <div className="flex items-center gap-3">
         <span className="text-xs text-muted">Defense timer</span>
         <span role="timer" aria-label="Time remaining" className="text-sm font-bold tabular-nums text-text">
@@ -300,6 +301,7 @@ function HackathonPageContent() {
           </div>
 
           <button
+            data-tour="defense-files"
             onClick={() => setShowFileTree(!showFileTree)}
             className={`px-3 py-1 border text-[10px] uppercase font-mono tracking-wider transition-colors cursor-pointer flex items-center gap-1.5 ${
               showFileTree
@@ -318,6 +320,7 @@ function HackathonPageContent() {
           >
             Dashboard
           </Link>
+          <Tutorial chapter="defense" />
           <NavbarAuth />
         </div>
 
@@ -325,7 +328,7 @@ function HackathonPageContent() {
       </header>
 
       {/* Criteria Progress Tracker Bar */}
-      <div className="border-b border-[#262626] bg-[#0d0d0d] px-6 py-2.5 overflow-x-auto">
+      <div data-tour="defense-progress" className="border-b border-[#262626] bg-[#0d0d0d] px-6 py-2.5 overflow-x-auto">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 min-w-[700px]">
           {HACKATHON_CRITERIA.map((criterion, idx) => {
             const result = evaluation.criterion_results.find(
@@ -477,7 +480,7 @@ function HackathonPageContent() {
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#262626]">
                 <div>
                   <div className="flex items-center gap-2 text-[10px] text-[#E6A360] uppercase tracking-wider mb-1 font-bold">
-                    <span>★ Final Hackathon Jury Defense Scorecard</span>
+                    <span data-tour="defense-summary">★ Final Hackathon Jury Defense Scorecard</span>
                   </div>
                   <h2 className="text-xl font-bold uppercase tracking-tight text-[#EDEDED]">
                     {repoTitle} Evaluation Complete
@@ -568,7 +571,7 @@ function HackathonPageContent() {
             </div>
           ) : lastSubmittedResult ? (
             /* State B: Grade & Feedback view for the just-answered criterion */
-            <div className="bg-[#171717] border border-[#262626] p-6 sm:p-8 flex flex-col gap-6 font-mono">
+            <div data-tour="defense-grade" className="bg-[#171717] border border-[#262626] p-6 sm:p-8 flex flex-col gap-6 font-mono">
               <div className="flex items-center justify-between pb-4 border-b border-[#262626]">
                 <div>
                   <div className="text-[10px] text-[#E6A360] uppercase tracking-wider mb-1">
@@ -698,7 +701,7 @@ function HackathonPageContent() {
                 </div>
 
                 {/* Subcriteria Checklist Box */}
-                <div className="p-3.5 bg-[#000000] border border-[#262626] flex flex-col gap-1.5">
+                <div data-tour="defense-rubric" className="p-3.5 bg-[#000000] border border-[#262626] flex flex-col gap-1.5">
                   <span className="text-[9px] text-[#A1A1A1] uppercase font-bold tracking-wider">
                     Official Judging Evaluation Metrics:
                   </span>
@@ -713,7 +716,7 @@ function HackathonPageContent() {
                 </div>
 
                 {/* Judge's Question Card */}
-                <div className="p-5 bg-[#121212] border-l-2 border-l-[#E6A360] border-y border-r border-[#262626] flex flex-col gap-3">
+                <div data-tour="defense-question" className="p-5 bg-[#121212] border-l-2 border-l-[#E6A360] border-y border-r border-[#262626] flex flex-col gap-3">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 text-[10px] text-[#E6A360] uppercase tracking-wider font-bold">
                       <span>⚡ Head Judge Inquiry</span>
@@ -745,7 +748,7 @@ function HackathonPageContent() {
                 </div>
 
                 {/* Defense Input Area */}
-                <div className="flex flex-col gap-2">
+                <div data-tour="defense-answer" className="flex flex-col gap-2">
                   <div className="flex items-center justify-between text-[10px] text-[#A1A1A1] uppercase tracking-wider">
                     <span>Your Team&apos;s Defense / Answer</span>
                     <span>{answer.length} / 4000 chars</span>

@@ -59,6 +59,7 @@ export function QuestionPanel({
         {/* Hint toggle */}
         <button
           type="button"
+          data-tour="practice-hint"
           onClick={() => setShowHint(!showHint)}
           className="font-mono text-[10px] uppercase tracking-wider text-[#A1A1A1] hover:text-[#EDEDED] bg-transparent border border-[#333333] hover:border-[#EDEDED] px-2.5 py-1 transition-colors cursor-pointer"
         >
@@ -67,7 +68,7 @@ export function QuestionPanel({
       </div>
 
       {/* Question Prompt */}
-      <div className="flex items-start justify-between gap-3">
+      <div data-tour="practice-question" className="flex items-start justify-between gap-3">
         <h2 className="text-base font-bold text-[#EDEDED] uppercase tracking-tight leading-snug flex-1">
           {questionText}
         </h2>
@@ -110,7 +111,7 @@ export function QuestionPanel({
       )}
 
       {/* Answer Form */}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
+      <form data-tour="practice-answer" onSubmit={handleSubmit} className="flex flex-col gap-2.5">
         <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-wider">
           <label className="text-[#A1A1A1]">
             Your Mental Model / Explanation

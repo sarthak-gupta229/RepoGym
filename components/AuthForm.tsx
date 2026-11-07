@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { Tutorial } from './Tutorial';
 
 interface AuthFormProps {
   initialMode?: 'signin' | 'signup';
@@ -188,6 +189,8 @@ export function AuthForm({ initialMode = 'signin' }: AuthFormProps) {
 
   return (
     <div className="w-full max-w-md bg-[#171717] border border-[#262626] p-6 sm:p-8 text-left">
+      <div className="mb-3 flex justify-end"><Tutorial chapter="account" /></div>
+
       {/* Brand Header */}
       <div className="flex flex-col items-start mb-6">
         <Link href="/" className="flex items-center gap-2 mb-3">
@@ -209,7 +212,7 @@ export function AuthForm({ initialMode = 'signin' }: AuthFormProps) {
       </div>
 
       {/* Tabs */}
-      <div className="grid grid-cols-2 gap-2 mb-6 font-mono text-[10px] uppercase tracking-wider">
+      <div data-tour="auth-mode" className="grid grid-cols-2 gap-2 mb-6 font-mono text-[10px] uppercase tracking-wider">
         <button
           type="button"
           onClick={() => {
@@ -259,6 +262,7 @@ export function AuthForm({ initialMode = 'signin' }: AuthFormProps) {
       {mode === 'signin' && (
         <button
           type="button"
+          data-tour="auth-demo"
           onClick={handleDemoLogin}
           disabled={loading}
           className="w-full mb-4 py-2 px-3 bg-[#000000] border border-[#333333] hover:border-[#EDEDED] text-[#EDEDED] font-mono text-[10px] uppercase tracking-wider flex items-center justify-between transition-colors cursor-pointer"
@@ -274,6 +278,7 @@ export function AuthForm({ initialMode = 'signin' }: AuthFormProps) {
       {/* GitHub OAuth Button */}
       <button
         type="button"
+        data-tour="auth-github"
         onClick={handleOAuthGitHub}
         disabled={loading}
         className="w-full py-2.5 px-4 bg-[#000000] border border-[#333333] hover:border-[#EDEDED] text-[#EDEDED] font-mono text-[10px] uppercase tracking-wider flex items-center justify-center gap-2 transition-colors disabled:opacity-40 cursor-pointer"
@@ -300,7 +305,7 @@ export function AuthForm({ initialMode = 'signin' }: AuthFormProps) {
       </div>
 
       {/* Form Fields */}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+      <form data-tour="auth-form" onSubmit={handleSubmit} className="flex flex-col gap-3.5">
         {mode === 'signup' && (
           <div>
             <label className="block font-mono text-[10px] uppercase tracking-wider text-[#A1A1A1] mb-1">

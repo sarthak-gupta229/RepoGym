@@ -90,7 +90,7 @@ export function NavbarAuth() {
     const displayName = (user.name || user.email.split('@')[0]).toUpperCase();
 
     return (
-      <div className="flex items-center gap-2 font-mono text-[10px] uppercase">
+      <div data-tour="account" className="flex items-center gap-2 font-mono text-[10px] uppercase">
         <ThemeToggle />
         <Link
           href="/dashboard"
@@ -111,7 +111,7 @@ export function NavbarAuth() {
   }
 
   return (
-    <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider">
+    <div data-tour="account" className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider">
       <ThemeToggle />
       <Link
         href="/signin"

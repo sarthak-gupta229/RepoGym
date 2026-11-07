@@ -10,6 +10,7 @@ import { GradeCard } from '@/components/GradeCard';
 import type { Session, Question, Attempt, Analysis } from '@/lib/store';
 import { Citation } from '@/lib/schemas';
 import { NavbarAuth } from '@/components/NavbarAuth';
+import { Tutorial } from '@/components/Tutorial';
 
 function SessionPageContent() {
   const params = useParams();
@@ -194,7 +195,7 @@ function SessionPageContent() {
   return (
     <div className="min-h-screen flex flex-col bg-[#000000] text-[#EDEDED]">
       {/* Top Navbar */}
-      <header className="border-b border-[#262626] bg-[#000000] px-6 py-3 flex items-center justify-between sticky top-0 z-30">
+      <header className="border-b border-[#262626] bg-[#000000] px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2 sticky top-0 z-30">
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2 group">
             <span className="px-1.5 py-0.5 bg-[#EDEDED] text-[#000000] font-mono font-bold text-xs">
@@ -208,7 +209,7 @@ function SessionPageContent() {
           <span className="text-[10px] font-mono text-[#A1A1A1] uppercase tracking-wider">
             Flow Tracing
           </span>
-          <span className="text-[10px] font-mono px-2 py-0.5 bg-[#171717] border border-[#262626] text-[#EDEDED] uppercase">
+          <span data-tour="practice-progress" className="text-[10px] font-mono px-2 py-0.5 bg-[#171717] border border-[#262626] text-[#EDEDED] uppercase">
             {isCompleted ? 'COMPLETED' : `QUESTION ${session.current_index} OF ${session.total_questions}`}
           </span>
         </div>
@@ -221,6 +222,7 @@ function SessionPageContent() {
             Dashboard
           </Link>
           <div className="h-4 w-px bg-[#262626] hidden sm:block" />
+          <Tutorial chapter="practice" />
           <NavbarAuth />
         </div>
       </header>
@@ -228,7 +230,7 @@ function SessionPageContent() {
       {/* Main Workspace */}
       <main className="flex-1 p-4 grid grid-cols-1 lg:grid-cols-12 gap-4 h-[calc(100vh-60px)]">
         {/* Left Pane: Interactive Dependency Graph */}
-        <div className="lg:col-span-6 flex flex-col h-full bg-[#171717] border border-[#262626] p-3">
+        <div data-tour="practice-graph" className="lg:col-span-6 flex flex-col h-full bg-[#171717] border border-[#262626] p-3">
           <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#262626] text-[10px] font-mono uppercase tracking-wider text-[#A1A1A1]">
             <span>Code Structure & Traced Flow</span>
             <span className="text-[#E6A360]">
@@ -253,7 +255,7 @@ function SessionPageContent() {
         <div className="lg:col-span-6 flex flex-col gap-4 h-full overflow-y-auto pr-1">
           {/* If Session is Completed: Show Summary */}
           {isCompleted ? (
-            <div className="bg-[#171717] border border-[#262626] p-6 flex flex-col gap-4">
+            <div data-tour="practice-summary" className="bg-[#171717] border border-[#262626] p-6 flex flex-col gap-4">
               <div className="flex items-center gap-3">
                 <span className="px-2 py-1 bg-[#EDEDED] text-[#000000] font-mono font-bold text-xs">
                   ✓ DONE
@@ -344,7 +346,7 @@ function SessionPageContent() {
           )}
 
           {/* Active File Inspection Viewer */}
-          <div className="flex-1 min-h-[300px]">
+          <div data-tour="practice-source" className="flex-1 min-h-[300px]">
             {selectedFile && analysis.file_map[selectedFile] ? (
               <FileViewer
                 filePath={selectedFile}

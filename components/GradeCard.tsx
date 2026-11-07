@@ -78,7 +78,7 @@ export function GradeCard({
         </div>
 
         {/* Feedback controls */}
-        <div className="flex items-center gap-2 font-mono text-[10px] text-[#A1A1A1] uppercase tracking-wider">
+        <div data-tour="practice-feedback" className="flex items-center gap-2 font-mono text-[10px] text-[#A1A1A1] uppercase tracking-wider">
           <span className="hidden sm:inline">Helpful?</span>
           <button
             onClick={() => handleFeedback(true)}
@@ -122,7 +122,7 @@ export function GradeCard({
       )}
 
       {/* Tutor Explanation */}
-      <div className="text-xs text-[#EDEDED] leading-relaxed bg-[#000000] p-3.5 border border-[#262626]">
+      <div data-tour="practice-grade" className="text-xs text-[#EDEDED] leading-relaxed bg-[#000000] p-3.5 border border-[#262626]">
         <span className="font-mono text-[10px] font-semibold block mb-1 text-[#A1A1A1] uppercase tracking-wider">
           Evaluation & Critique:
         </span>
@@ -131,7 +131,7 @@ export function GradeCard({
 
       {/* Code Citations (Verified In Code) */}
       {grade.citations && grade.citations.length > 0 && (
-        <div className="flex flex-col gap-2">
+        <div data-tour="practice-citations" className="flex flex-col gap-2">
           <span className="text-[10px] font-mono font-semibold text-[#A1A1A1] uppercase tracking-wider">
             Verified Source Citations (Click to inspect line bounds):
           </span>
@@ -166,6 +166,7 @@ export function GradeCard({
       {/* Next Question CTA */}
       <div className="pt-2 flex justify-end">
         <button
+          data-tour="practice-next"
           onClick={onNextQuestion}
           disabled={isLoadingNext}
           className="px-5 py-2.5 bg-[#EDEDED] text-[#000000] border border-[#EDEDED] hover:bg-white font-mono text-[10px] uppercase tracking-wider font-semibold transition-all duration-140 flex items-center gap-2 cursor-pointer disabled:opacity-40"
